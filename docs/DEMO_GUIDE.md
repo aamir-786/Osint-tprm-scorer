@@ -22,6 +22,8 @@ Because all categories had >= 50% coverage, no weight redistribution occurred. T
 - **Legal & Regulatory (10%):** 950 * 0.10 = 95
 **Total:** 282 + 190 + 142.5 + 142.5 + 92 + 95 = 944
 
+> **Note on OSINT Data Feeds:** In this Demo environment, the browser executes real live CORS-friendly queries (like Google Public DNS and ICANN RDAP). However, for APIs like RSS Feeds, BreachDB, or Shodan that block browser origins, the system uses a **Deterministic Domain Hash**. This intelligently generates highly realistic and consistent mock data based on the URL, allowing you to perfectly test the math and coverage models. To attach real API keys (e.g., NewsAPI, Qualys), a dedicated backend proxy must be established.
+
 ---
 
 ## Complete System Architecture & Data Flow Diagram

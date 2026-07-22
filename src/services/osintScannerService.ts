@@ -329,36 +329,55 @@ export async function runRealtimeOSINTScan(
       };
     }
   } else {
-    // Generate deterministic random findings for unlisted domains
+    // Generate realistic, harsher deterministic findings for unlisted domains
+    // This proves the mathematical engine, coverage model, and override system work for the demo.
+    
+    // Cybersecurity
+    if (hash % 2 === 0) {
+      signalStatuses.cs_ssl = { signalId: 'cs_ssl', checked: true, hasFinding: true, severity: 'Medium', findingDetails: 'SSL Certificate expires in less than 30 days', source: 'Qualys Mock' };
+    }
     if (hash % 5 === 0) {
-      signalStatuses.cs_security_txt = {
-        signalId: 'cs_security_txt',
-        checked: true,
-        hasFinding: true,
-        severity: 'Low',
-        findingDetails: `security.txt file not indexed at https://${domain}/.well-known/security.txt`,
-        source: 'HTTP Request GET /.well-known/security.txt',
-      };
+      signalStatuses.cs_exposed_services = { signalId: 'cs_exposed_services', checked: true, hasFinding: true, severity: 'High', findingDetails: 'Exposed RDP port 3389 detected', source: 'Shodan Mock' };
     }
-    if (hash % 7 === 0) {
-      signalStatuses.rep_negative_news = {
-        signalId: 'rep_negative_news',
-        checked: true,
-        hasFinding: true,
-        severity: 'Medium',
-        findingDetails: `Adverse media coverage detected relating to regulatory fine in last 12 months`,
-        source: 'News API Aggregator',
-      };
+    if (hash % 3 === 0) {
+      signalStatuses.cs_security_txt = { signalId: 'cs_security_txt', checked: true, hasFinding: true, severity: 'Low', findingDetails: 'Missing security.txt', source: 'HTTP Mock' };
     }
+
+    // Compliance
     if (hash % 4 === 0) {
-      signalStatuses.cp_privacy_policy = {
-        signalId: 'cp_privacy_policy',
-        checked: true,
-        hasFinding: true,
-        severity: 'High',
-        findingDetails: `Privacy policy contains non-compliant GDPR clauses regarding data retention`,
-        source: 'AI Legal Analyzer',
-      };
+      signalStatuses.cp_privacy_policy = { signalId: 'cp_privacy_policy', checked: true, hasFinding: true, severity: 'High', findingDetails: 'Privacy policy contains non-compliant GDPR clauses', source: 'AI Analyzer' };
+    }
+    if (hash % 6 === 0) {
+      signalStatuses.cp_dpa = { signalId: 'cp_dpa', checked: true, hasFinding: true, severity: 'Medium', findingDetails: 'No public DPA available', source: 'Legal Telemetry' };
+    }
+
+    // Business Stability
+    if (hash % 7 === 0) {
+      signalStatuses.bs_layoffs = { signalId: 'bs_layoffs', checked: true, hasFinding: true, severity: 'Medium', findingDetails: 'News indicates recent workforce reduction >10%', source: 'News Aggregator' };
+    }
+
+    // Reputation
+    if (hash % 8 === 0) {
+      signalStatuses.rep_negative_news = { signalId: 'rep_negative_news', checked: true, hasFinding: true, severity: 'High', findingDetails: 'Adverse media coverage relating to regulatory fine', source: 'RSS Feeds' };
+    }
+    if (hash % 11 === 0) {
+      signalStatuses.rep_breach_history = { signalId: 'rep_breach_history', checked: true, hasFinding: true, severity: 'Critical', findingDetails: 'Domain found in recent dark web credential leak', source: 'BreachDB Mock' };
+    }
+
+    // Legal & Reg
+    if (hash % 9 === 0) {
+      signalStatuses.lr_fines = { signalId: 'lr_fines', checked: true, hasFinding: true, severity: 'Medium', findingDetails: 'Past regulatory action found in public records', source: 'Legal Database' };
+    }
+
+    // Simulate "Insufficient Data" (Coverage Model Trigger)
+    // For 1 in 4 domains, we simulate that we couldn't find ANY data for Business Stability
+    if (hash % 4 === 1) {
+      CATEGORIES['bs'].signals.forEach(sig => {
+        if (signalStatuses[sig.id]) {
+          signalStatuses[sig.id].checked = false;
+          signalStatuses[sig.id].hasFinding = false;
+        }
+      });
     }
   }
 
@@ -368,8 +387,8 @@ export async function runRealtimeOSINTScan(
     assets: [],
     signalStatuses,
     customFindings: [],
-    overrideDirectSanctionsOrBreach: profile?.hasSanctionHit || (hash % 13 === 0 && !profile), // rare
-    overridePartialSanctions: profile?.hasPartialSanction || (hash % 11 === 0 && !profile), // rare
+    overrideDirectSanctionsOrBreach: profile?.hasSanctionHit || (hash % 15 === 0 && !profile), // ~6% chance of Grade F override
+    overridePartialSanctions: profile?.hasPartialSanction || (hash % 12 === 0 && !profile), // ~8% chance of Grade C cap
     overrideDetails: profile?.hasSanctionHit ? 'Direct OFAC Sanction match flag triggered' : undefined,
   };
 }

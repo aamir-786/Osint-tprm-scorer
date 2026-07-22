@@ -43,6 +43,13 @@ Certain extremely severe findings instantly override the mathematical model to p
 - **Direct Sanctions or Active Breach:** Overrides final score to Grade F.
 - **Related-Entity / Partial Sanction Match:** Applies a soft-cap of Grade C (maximum score).
 
+### 7. Hybrid OSINT Telemetry Engine (Demo Mode)
+Because this application runs entirely in the browser (client-side React), it is restricted by CORS (Cross-Origin Resource Sharing) policies.
+To provide a seamless demo experience without requiring a backend, the system uses a **Hybrid OSINT Engine**:
+- **Real-Time Data:** Queries public, CORS-enabled APIs directly from the browser (e.g., Google DoH for DNS/TXT records, ICANN RDAP for domain registration age).
+- **Deterministic Mock Engine:** For external APIs that block browser requests (like Shodan, HaveIBeenPwned, News RSS feeds), the system utilizes a powerful Deterministic Domain Hashing algorithm. This generates highly realistic, consistent mock findings (e.g., `microsoft.com` will always generate the exact same "mocked" privacy policy failure every time you scan it).
+> **Note for Production:** To transition this system into a true production scanner, a backend proxy server (e.g., Node.js/Express) must be built to hold private API keys and execute backend requests on behalf of the client.
+
 ## Output & Reporting
 The system produces two final outputs:
 1. **Defensible Risk Score (0-950) & Grade (A-F)**
