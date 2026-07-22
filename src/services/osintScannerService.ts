@@ -36,37 +36,6 @@ export function extractDomainFromInput(rawInput: string): { domain: string; comp
   }
 }
 
-// Live DNS-over-HTTPS (DoH) Helper via Google Public DNS
-async function queryDNS(name: string, type: string = 'A'): Promise<any> {
-  try {
-    const res = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(name)}&type=${type}`);
-    if (res.ok) {
-      return await res.json();
-    }
-  } catch (err) {
-    // CORS or network fallback
-  }
-  return null;
-}
-
-// Live ICANN RDAP Query Helper
-async function queryRDAP(domain: string): Promise<{ creationYear?: number } | null> {
-  try {
-    const res = await fetch(`https://rdap.org/domain/${encodeURIComponent(domain)}`);
-    if (res.ok) {
-      const data = await res.json();
-      const regEvent = data.events?.find((e: any) => e.eventAction === 'registration');
-      if (regEvent && regEvent.eventDate) {
-        const year = new Date(regEvent.eventDate).getFullYear();
-        return { creationYear: year };
-      }
-    }
-  } catch (err) {
-    // CORS or network fallback
-  }
-  return null;
-}
-
 // Known domain telemetry profiles for instant hyper-realistic baseline comparison
 const DOMAIN_TELEMETRY_DB: Record<string, {
   companyName: string;
@@ -182,42 +151,14 @@ export async function runRealtimeOSINTScan(
     { id: 'legal', name: 'Legal: U.S. OFAC & UN Sanctions Watchlist Screening', category: 'Legal', status: 'pending' },
   ];
 
-  // Live Async Fetch Queries
-  const dnsPromise = queryDNS(domain, 'A');
-  const dmarcPromise = queryDNS(`_dmarc.${domain}`, 'TXT');
-  const statusDnsPromise = queryDNS(`status.${domain}`, 'CNAME');
-  const rdapPromise = queryRDAP(domain);
-
-  // Animate progress steps while queries run
+  // Set all steps to scanning to simulate work in progress
   for (let i = 0; i < steps.length; i++) {
     steps[i].status = 'scanning';
-    if (onProgress) onProgress([...steps]);
-    await new Promise(res => setTimeout(res, 180));
-    steps[i].status = 'completed';
-    steps[i].detail = 'Live signal query completed';
-    if (onProgress) onProgress([...steps]);
   }
+  if (onProgress) onProgress([...steps]);
 
-  const [dnsData, dmarcData, statusDnsData, rdapData] = await Promise.all([
-    dnsPromise,
-    dmarcPromise,
-    statusDnsPromise,
-    rdapPromise,
-  ]);
-
-  // Construct Vendor Identity
-  const identity: VendorIdentity = {
-    companyName: profile?.companyName || companyName,
-    confirmedDomain: domain,
-    resolutionConfidence: profile?.resolutionConfidence || (dnsData?.Status === 0 ? 'High' : 'Low'),
-    resolutionReason: profile?.resolutionReason || (dnsData?.Status === 0 ? undefined : 'DNS resolution failed or ambiguous TLD'),
-    candidateDomains: [domain, `${domain.replace(/\.[a-z]+$/, '')}.io`, `${domain.replace(/\.[a-z]+$/, '')}.net`],
-  };
-
-  // Build signal statuses across all 6 categories
+  // Build standard preset defaults so all signals exist
   const signalStatuses: Record<string, SignalStatus> = {};
-
-  // Standard preset defaults
   Object.keys(CATEGORIES).forEach(catKey => {
     CATEGORIES[catKey as CategoryKey].signals.forEach(sig => {
       signalStatuses[sig.id] = {
@@ -228,158 +169,39 @@ export async function runRealtimeOSINTScan(
     });
   });
 
-  // Apply real live DNS/RDAP findings or fallback to deterministic mock
-  
-  // Simple deterministic hash function for the domain
-  const hash = domain.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-
-  const hasDmarc = dmarcData?.Answer && dmarcData.Answer.some((ans: any) => ans.data && ans.data.includes('v=DMARC1'));
-  if (!hasDmarc && !profile) {
-    if (hash % 2 === 0) { // 50% chance of failing if live query fails/empty
-      signalStatuses.cs_headers = {
-        signalId: 'cs_headers',
-        checked: true,
-        hasFinding: true,
-        severity: 'Medium',
-        findingDetails: `Missing DMARC DNS record (_dmarc.${domain})`,
-        source: 'Google DNS-over-HTTPS (DoH)',
-      };
+  // Call actual backend API
+  try {
+    const res = await fetch(`/api/scan?domain=${encodeURIComponent(domain)}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.signalStatuses) {
+        // Merge backend findings into the default signals
+        Object.keys(data.signalStatuses).forEach(sigId => {
+          signalStatuses[sigId] = data.signalStatuses[sigId];
+        });
+      }
+    } else {
+      console.error('Backend scan failed with status', res.status);
     }
+  } catch (err) {
+    console.error('Error fetching backend scan:', err);
   }
 
-  const hasStatusPage = (statusDnsData?.Answer && statusDnsData.Answer.length > 0) || profile?.statusPagePresent;
-  if (!hasStatusPage && !profile) {
-    if (hash % 3 === 0) { // 33% chance
-      signalStatuses.or_status_page = {
-        signalId: 'or_status_page',
-        checked: true,
-        hasFinding: true,
-        severity: 'Medium',
-        findingDetails: `No public status page CNAME detected at status.${domain}`,
-        source: 'Google DNS-over-HTTPS (DoH)',
-      };
-    }
+  // Update progress to completed
+  for (let i = 0; i < steps.length; i++) {
+    steps[i].status = 'completed';
+    steps[i].detail = 'Live backend signal query completed';
   }
+  if (onProgress) onProgress([...steps]);
 
-  if (rdapData && rdapData.creationYear) {
-    const currentYear = new Date().getFullYear();
-    const ageYears = currentYear - rdapData.creationYear;
-    if (ageYears < 2 && !profile) {
-      signalStatuses.bs_registration_age = {
-        signalId: 'bs_registration_age',
-        checked: true,
-        hasFinding: true,
-        severity: 'Low',
-        findingDetails: `Domain registered recently in ${rdapData.creationYear} (${ageYears} years old)`,
-        source: 'ICANN RDAP Protocol API',
-      };
-    }
-  }
-
-  // Merge profile-specific findings for preset demo targets
-  if (profile) {
-    if (profile.hasExposedService) {
-      signalStatuses.cs_exposed_services = {
-        signalId: 'cs_exposed_services',
-        checked: true,
-        hasFinding: true,
-        severity: 'Critical',
-        findingDetails: `Exposed unauthenticated Redis & Elasticsearch database on ${domain}`,
-        source: 'Shodan Real-Time Scanner',
-      };
-    }
-    if (profile.sslGrade === 'F') {
-      signalStatuses.cs_ssl = {
-        signalId: 'cs_ssl',
-        checked: true,
-        hasFinding: true,
-        severity: 'Critical',
-        findingDetails: `SSL Grade F (Insecure TLS 1.0 enabled & expired cert)`,
-        source: 'Qualys SSL Labs API',
-      };
-    }
-    if (profile.hasBreachHistory) {
-      signalStatuses.rep_breach_history = {
-        signalId: 'rep_breach_history',
-        checked: true,
-        hasFinding: true,
-        severity: 'Critical',
-        findingDetails: `Confirmed breach leak disclosed on dark web forum`,
-        source: 'HaveIBeenPwned & BreachDB Telemetry',
-      };
-    }
-    if (profile.privacyPolicyMissing) {
-      signalStatuses.cp_privacy_policy = {
-        signalId: 'cp_privacy_policy',
-        checked: true,
-        hasFinding: true,
-        severity: 'Medium',
-        findingDetails: `No accessible privacy policy found on root domain`,
-        source: 'HTTP Crawler',
-      };
-    }
-    if (profile.dpaMissing) {
-      signalStatuses.cp_dpa = {
-        signalId: 'cp_dpa',
-        checked: true,
-        hasFinding: true,
-        severity: 'Low',
-        findingDetails: `No public Data Processing Addendum (DPA) indexed`,
-        source: 'Legal Telemetry Index',
-      };
-    }
-  } else {
-    // Generate realistic, harsher deterministic findings for unlisted domains
-    // This proves the mathematical engine, coverage model, and override system work for the demo.
-    
-    // Cybersecurity
-    if (hash % 2 === 0) {
-      signalStatuses.cs_ssl = { signalId: 'cs_ssl', checked: true, hasFinding: true, severity: 'Medium', findingDetails: 'SSL Certificate expires in less than 30 days', source: 'Qualys Mock' };
-    }
-    if (hash % 5 === 0) {
-      signalStatuses.cs_exposed_services = { signalId: 'cs_exposed_services', checked: true, hasFinding: true, severity: 'High', findingDetails: 'Exposed RDP port 3389 detected', source: 'Shodan Mock' };
-    }
-    if (hash % 3 === 0) {
-      signalStatuses.cs_security_txt = { signalId: 'cs_security_txt', checked: true, hasFinding: true, severity: 'Low', findingDetails: 'Missing security.txt', source: 'HTTP Mock' };
-    }
-
-    // Compliance
-    if (hash % 4 === 0) {
-      signalStatuses.cp_privacy_policy = { signalId: 'cp_privacy_policy', checked: true, hasFinding: true, severity: 'High', findingDetails: 'Privacy policy contains non-compliant GDPR clauses', source: 'AI Analyzer' };
-    }
-    if (hash % 6 === 0) {
-      signalStatuses.cp_dpa = { signalId: 'cp_dpa', checked: true, hasFinding: true, severity: 'Medium', findingDetails: 'No public DPA available', source: 'Legal Telemetry' };
-    }
-
-    // Business Stability
-    if (hash % 7 === 0) {
-      signalStatuses.bs_layoffs = { signalId: 'bs_layoffs', checked: true, hasFinding: true, severity: 'Medium', findingDetails: 'News indicates recent workforce reduction >10%', source: 'News Aggregator' };
-    }
-
-    // Reputation
-    if (hash % 8 === 0) {
-      signalStatuses.rep_negative_news = { signalId: 'rep_negative_news', checked: true, hasFinding: true, severity: 'High', findingDetails: 'Adverse media coverage relating to regulatory fine', source: 'RSS Feeds' };
-    }
-    if (hash % 11 === 0) {
-      signalStatuses.rep_breach_history = { signalId: 'rep_breach_history', checked: true, hasFinding: true, severity: 'Critical', findingDetails: 'Domain found in recent dark web credential leak', source: 'BreachDB Mock' };
-    }
-
-    // Legal & Reg
-    if (hash % 9 === 0) {
-      signalStatuses.lr_fines = { signalId: 'lr_fines', checked: true, hasFinding: true, severity: 'Medium', findingDetails: 'Past regulatory action found in public records', source: 'Legal Database' };
-    }
-
-    // Simulate "Insufficient Data" (Coverage Model Trigger)
-    // For 1 in 4 domains, we simulate that we couldn't find ANY data for Business Stability
-    if (hash % 4 === 1) {
-      CATEGORIES['bs'].signals.forEach(sig => {
-        if (signalStatuses[sig.id]) {
-          signalStatuses[sig.id].checked = false;
-          signalStatuses[sig.id].hasFinding = false;
-        }
-      });
-    }
-  }
+  // Construct Vendor Identity
+  const identity: VendorIdentity = {
+    companyName: profile?.companyName || companyName,
+    confirmedDomain: domain,
+    resolutionConfidence: profile?.resolutionConfidence || 'High',
+    resolutionReason: profile?.resolutionReason,
+    candidateDomains: [domain, `${domain.replace(/\.[a-z]+$/, '')}.io`, `${domain.replace(/\.[a-z]+$/, '')}.net`],
+  };
 
   return {
     identity,
@@ -387,8 +209,8 @@ export async function runRealtimeOSINTScan(
     assets: [],
     signalStatuses,
     customFindings: [],
-    overrideDirectSanctionsOrBreach: profile?.hasSanctionHit || (hash % 15 === 0 && !profile), // ~6% chance of Grade F override
-    overridePartialSanctions: profile?.hasPartialSanction || (hash % 12 === 0 && !profile), // ~8% chance of Grade C cap
+    overrideDirectSanctionsOrBreach: profile?.hasSanctionHit || false,
+    overridePartialSanctions: profile?.hasPartialSanction || false,
     overrideDetails: profile?.hasSanctionHit ? 'Direct OFAC Sanction match flag triggered' : undefined,
   };
 }
