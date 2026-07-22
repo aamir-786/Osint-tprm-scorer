@@ -45,7 +45,28 @@ Built with a pristine Light Theme UI featuring glassmorphism and modern enterpri
  ┣ 📂 types             # TypeScript interfaces
  ┣ 📜 App.tsx           # Root Application
  ┗ 📜 main.tsx          # React DOM entry
+📦 server               # Node.js/Express Backend Proxy
+ ┣ 📂 scanners          # OSINT API Integration Modules
+ ┃ ┣ 📜 businessStability.js
+ ┃ ┣ 📜 compliance.js
+ ┃ ┣ 📜 cybersecurity.js
+ ┃ ┣ 📜 legal.js
+ ┃ ┗ 📜 reputation.js
+ ┣ 📜 index.js          # Express Entry Point
+ ┗ 📜 test-scanners.js  # Backend Testing Script
 ```
+
+
+---
+
+## 🔑 API Dependencies
+
+The Wahid AI TPRM backend connects to several third-party APIs to gather comprehensive OSINT telemetry. If any API key is missing from your `.env` file, the backend gracefully skips that specific scan without crashing.
+
+*   **Shodan API** (Cybersecurity): Detects exposed databases, open ports, and infrastructure vulnerabilities.
+*   **NewsAPI** (Business Stability & Reputation): Scans for negative media, mass layoff reports, and bankruptcy filings.
+*   **OpenSanctions** (Legal & Regulatory): Screens entities against international sanctions and regulatory watchlists.
+*   **HaveIBeenPwned** (Reputation): Identifies historical data breach disclosures and credential leaks.
 
 ---
 
@@ -77,12 +98,36 @@ For an in-depth understanding of the scoring mathematics, identity resolution, a
     npm install
     ```
 
-3.  **Start the development server**
+3.  **Configure Environment Variables**
+    Copy the example configuration file and optionally add your API keys:
     ```bash
-    npm run dev
+    cp .env.example .env
     ```
 
-4.  **Open your browser** and navigate to `http://localhost:5173`.
+
+
+### Running the Application
+
+There are three ways to run the system depending on your development needs:
+
+**Option 1: Run Concurrently (Recommended)**
+This will start both the React frontend and the Express backend simultaneously in the same terminal.
+```bash
+npm run dev
+```
+*The frontend will be available at `http://localhost:5173` and the backend at `http://localhost:3000`.*
+
+**Option 2: Run Frontend Only**
+If you are only working on UI/UX and don't need the live backend proxy.
+```bash
+npm run dev:frontend
+```
+
+**Option 3: Run Backend Only**
+If you want to test the OSINT API endpoints or run test scripts independently.
+```bash
+npm run dev:backend
+```
 
 ---
 
