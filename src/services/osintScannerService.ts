@@ -21,17 +21,32 @@ export function extractDomainFromInput(rawInput: string): { domain: string; comp
   // Strip www.
   clean = clean.replace(/^www\./i, '');
 
+  // Known entity mapping for precise legal names
+  const knownEntities: Record<string, string> = {
+    'openai.com': 'OpenAI OpCo LLC',
+    'google.com': 'Google LLC',
+    'stripe.com': 'Stripe, Inc.',
+    'github.com': 'GitHub, Inc.',
+    'slack.com': 'Slack Technologies LLC',
+    'apple.com': 'Apple Inc.',
+    'microsoft.com': 'Microsoft Corporation'
+  };
+
   if (clean.includes('.')) {
-    // Looks like a domain
-    const parts = clean.split('.');
-    const namePart = parts[parts.length - 2] || parts[0];
-    const companyName = namePart.charAt(0).toUpperCase() + namePart.slice(1) + ' Inc.';
-    return { domain: clean, companyName };
+    const domain = clean;
+    if (knownEntities[domain]) {
+      return { domain, companyName: knownEntities[domain] };
+    }
+    const namePart = clean.split('.')[0];
+    const companyName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+    return { domain, companyName };
   } else {
     // Looks like a company name
+    const domain = clean.toLowerCase() + '.com';
+    if (knownEntities[domain]) {
+      return { domain, companyName: knownEntities[domain] };
+    }
     const companyName = rawInput.trim();
-    const cleanName = clean.replace(/[^a-z0-9]/g, '');
-    const domain = `${cleanName}.com`;
     return { domain, companyName };
   }
 }

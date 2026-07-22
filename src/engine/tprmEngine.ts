@@ -49,6 +49,7 @@ export function calculateTPRMScore(input: AssessmentInput): ScoringResult {
             severity: status.severity,
             source: status.source || 'OSINT Automated Check',
             confirmed: status.severity !== 'Informational',
+            evidencePayload: status.evidencePayload,
           });
         }
       } else {

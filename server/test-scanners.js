@@ -5,8 +5,9 @@ const { scanReputation } = require('./scanners/reputation');
 const { scanLegal } = require('./scanners/legal');
 const dotenv = require('dotenv');
 
+const path = require('path');
 // Load environment variables
-dotenv.config({ path: '../.env' });
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 async function runTests() {
   const testDomains = ['example.com', 'github.com', 'nonexistent-fake-domain123.com'];

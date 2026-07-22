@@ -64,9 +64,8 @@ Built with a pristine Light Theme UI featuring glassmorphism and modern enterpri
 The Wahid AI TPRM backend connects to several third-party APIs to gather comprehensive OSINT telemetry. If any API key is missing from your `.env` file, the backend gracefully skips that specific scan without crashing.
 
 *   **Shodan API** (Cybersecurity): Detects exposed databases, open ports, and infrastructure vulnerabilities.
-*   **NewsAPI** (Business Stability & Reputation): Scans for negative media, mass layoff reports, and bankruptcy filings.
+*   **NewsAPI / MediaStack** (Business Stability & Reputation): Scans for negative media, mass layoff reports, and bankruptcy filings.
 *   **OpenSanctions** (Legal & Regulatory): Screens entities against international sanctions and regulatory watchlists.
-*   **HaveIBeenPwned** (Reputation): Identifies historical data breach disclosures and credential leaks.
 
 ---
 

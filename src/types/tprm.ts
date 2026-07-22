@@ -38,6 +38,7 @@ export interface SignalStatus {
   findingDetails?: string;
   source?: string;
   reasonIfUnavailable?: string;
+  evidencePayload?: any[];
 }
 
 export interface AssetScore {
@@ -56,6 +57,7 @@ export interface FindingRecord {
   source: string;
   confirmed: boolean;
   assetId?: string;
+  evidencePayload?: any[];
 }
 
 export interface CategoryResult {

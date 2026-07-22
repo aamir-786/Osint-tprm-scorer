@@ -74,7 +74,7 @@ export const ScorecardView: React.FC<Props> = ({
           <div style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '4px' }}>
             Final Defensible Risk Score
           </div>
-          
+
           {isInsufficientData ? (
             <div>
               <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#f87171', marginTop: '6px' }}>
@@ -152,9 +152,41 @@ export const ScorecardView: React.FC<Props> = ({
 
       {/* Category Breakdown Table */}
       <div className="card" style={{ margin: 0 }}>
-        <div className="card-title" style={{ fontSize: '1rem', marginBottom: '12px' }}>
+        <div className="card-title" style={{ fontSize: '1rem', marginBottom: '12px', marginTop: '16px' }}>
           <Award size={18} color="#818cf8" />
           <span>Category Performance Breakdown</span>
+        </div>
+
+        {/* Visual Bar Chart (Explainable in one eye) */}
+        <div style={{ marginBottom: '24px', padding: '16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+          <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#475569', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Visual Risk Profile
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {categoryKeys.map(catKey => {
+              const cat = categoryResults[catKey];
+              const scorePct = Math.min(100, Math.max(0, (cat.rawScore / 950) * 100));
+              let barColor = '#ef4444'; // Red (High Risk)
+              if (cat.rawScore >= 800) barColor = '#10b981'; // Green (Low Risk)
+              else if (cat.rawScore >= 500) barColor = '#f59e0b'; // Yellow (Medium Risk)
+
+
+
+              return (
+                <div key={`visual-${catKey}`} style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <div style={{ width: '160px', fontSize: '0.85rem', fontWeight: 600, color: '#334155' }}>
+                    {cat.meta.name}
+                  </div>
+                  <div style={{ flex: 1, height: '10px', background: '#e2e8f0', borderRadius: '5px', overflow: 'hidden' }}>
+                    <div style={{ width: `${scorePct}%`, height: '100%', background: barColor, borderRadius: '5px', transition: 'width 0.5s ease-in-out' }}></div>
+                  </div>
+                  <div style={{ width: '80px', textAlign: 'right', fontSize: '0.85rem', fontWeight: 700, color: barColor }}>
+                    {cat.rawScore} <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 400 }}>/ 950</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         <div style={{ overflowX: 'auto' }}>

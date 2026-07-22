@@ -1,4 +1,4 @@
-import { ShieldCheck, LayoutDashboard, Settings } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 
 interface Props {
   activeModule: string;
@@ -11,7 +11,7 @@ export function WahidAiSidebar({ activeModule, onSelectModule }: Props) {
       {/* Brand Logo */}
       <div className="sidebar-brand" style={{ padding: '12px 18px 20px', display: 'flex', justifyContent: 'center' }}>
         <img
-          src="/wahid-logo-removebg-preview.png"
+          src="/wahid-logo.png"
           alt="Wahid AI Enterprise Governance"
           style={{
             width: '100%',
@@ -38,8 +38,6 @@ export function WahidAiSidebar({ activeModule, onSelectModule }: Props) {
             Third-Party Risk
           </div>
           <ul className="sidebar-sub-menu">
-            <li className="sidebar-sub-item active">• Vendor Risk Dashboard</li>
-
           </ul>
         </li>
       </ul>

@@ -1,0 +1,5 @@
+Domain,Category,Status,Total Findings,Final Score,Grade,Confidence,Insufficient Data,Error
+google.com,Tech Giant (Easy),Success,8,942,A,Low,TRUE,
+openai.com,Startup (Medium),Failed,0,0,-,-,FALSE,Scanner timeout
+ftx.com,Bankrupt/Scandal (Hard),Success,8,939,A,Low,TRUE,
+solarwinds.com,Breach History (Medium),Failed,0,0,-,-,FALSE,Scanner timeout

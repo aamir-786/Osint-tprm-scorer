@@ -39,41 +39,61 @@ async function scanCybersecurity(domain) {
   const shodanKey = process.env.SHODAN_API_KEY;
   if (shodanKey) {
     try {
-      // For Shodan, we typically need to resolve the domain to an IP first, 
-      // but Shodan also has a /shodan/host/search endpoint.
-      // E.g. search for hostname
-      const response = await axios.get(`https://api.shodan.io/shodan/host/search?key=${shodanKey}&query=hostname:${domain}`);
-      if (response.data.total > 0) {
-        // Exposed services found
-        const ports = [...new Set(response.data.matches.map(m => m.port))];
-        const criticalPorts = [3389, 22, 23, 21, 1433, 3306, 27017, 9200];
-        const exposedCritical = ports.filter(p => criticalPorts.includes(p));
+      // Free Shodan Dev API keys cannot use /shodan/host/search. 
+      // We must resolve the domain to an IP first, then use /shodan/host/{ip}
+      const dns = require('dns').promises;
+      const { address } = await dns.lookup(domain);
+      
+      if (address) {
+        const ip = address;
+        try {
+          const response = await axios.get(`https://api.shodan.io/shodan/host/${ip}?key=${shodanKey}`);
+          
+          if (response.data && response.data.ports) {
+            const ports = response.data.ports;
+            const criticalPorts = [3389, 22, 23, 21, 1433, 3306, 27017, 9200];
+            const exposedCritical = ports.filter(p => criticalPorts.includes(p));
 
-        if (exposedCritical.length > 0) {
-          findings.push({
-            signalId: 'cs_exposed_services',
-            hasFinding: true,
-            severity: 'High',
-            findingDetails: `Exposed critical ports detected: ${exposedCritical.join(', ')}`,
-            source: 'Shodan API'
-          });
-        } else {
-          findings.push({
-            signalId: 'cs_exposed_services',
-            hasFinding: true,
-            severity: 'Low',
-            findingDetails: `Exposed non-standard ports detected: ${ports.join(', ')}`,
-            source: 'Shodan API'
-          });
+            if (exposedCritical.length > 0) {
+              findings.push({
+                signalId: 'cs_exposed_services',
+                hasFinding: true,
+                severity: 'High',
+                findingDetails: `Exposed critical ports detected on ${ip}: ${exposedCritical.join(', ')}`,
+                source: 'Shodan API'
+              });
+            } else {
+              findings.push({
+                signalId: 'cs_exposed_services',
+                hasFinding: true,
+                severity: 'Low',
+                findingDetails: `Exposed non-standard ports detected on ${ip}: ${ports.join(', ')}`,
+                source: 'Shodan API'
+              });
+            }
+          } else {
+            findings.push({
+              signalId: 'cs_exposed_services',
+              hasFinding: false,
+              severity: 'Informational',
+              findingDetails: `No exposed ports found on ${ip}.`,
+              source: 'Shodan API'
+            });
+          }
+        } catch (shodanErr) {
+            if (shodanErr.response && shodanErr.response.status === 404) {
+               // 404 just means Shodan hasn't scanned this IP or found nothing
+               findings.push({
+                 signalId: 'cs_exposed_services',
+                 hasFinding: false,
+                 severity: 'Informational',
+                 findingDetails: `No Shodan records found for ${ip}.`,
+                 source: 'Shodan API'
+               });
+            } else {
+               throw shodanErr;
+            }
         }
-      } else {
-        findings.push({
-          signalId: 'cs_exposed_services',
-          hasFinding: false,
-          severity: 'Informational',
-          findingDetails: 'No exposed infrastructure found.',
-          source: 'Shodan API'
-        });
       }
     } catch (err) {
       console.error(`Shodan API error for ${domain}:`, err.message);
