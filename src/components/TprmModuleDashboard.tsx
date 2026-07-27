@@ -6,11 +6,13 @@ import type { ScenarioPreset } from '../engine/presets';
 import { VendorIdentityHeader } from './VendorIdentityHeader';
 import { CategorySignalMatrix } from './CategorySignalMatrix';
 import { ScorecardView } from './ScorecardView';
+import { EvidenceModal } from './EvidenceModal';
 import { PresetSelector } from './PresetSelector';
-import { Download, Plus, LayoutGrid } from 'lucide-react';
+import { Download, Plus, LayoutGrid, FileText } from 'lucide-react';
 
 export function TprmModuleDashboard() {
   const [hasScanned, setHasScanned] = useState<boolean>(false);
+  const [isEvidenceModalOpen, setIsEvidenceModalOpen] = useState(false);
 
   // Initialize with an empty default for pristine start
   const [input, setInput] = useState<AssessmentInput>({
@@ -92,9 +94,6 @@ export function TprmModuleDashboard() {
               <Download size={14} /> Export PDF Report
             </button>
           )}
-          <button type="button" className="btn btn-primary" onClick={() => window.scrollTo({ top: 220, behavior: 'smooth' })} style={{ fontSize: '0.84rem' }}>
-            <Plus size={14} /> Register Vendor Initiative
-          </button>
         </div>
       </div>
 
@@ -162,7 +161,22 @@ export function TprmModuleDashboard() {
                 onToggleDirectSanction={handleToggleDirectSanctions}
                 onTogglePartialSanction={handleTogglePartialSanctions}
               />
+              <div style={{ padding: '0 20px 20px 20px', marginTop: '-10px' }}>
+                <button 
+                  type="button" 
+                  className="btn btn-primary" 
+                  onClick={() => setIsEvidenceModalOpen(true)}
+                  style={{ width: '100%', padding: '14px', fontSize: '1rem', display: 'flex', justifyContent: 'center', gap: '8px', background: '#0f172a' }}
+                >
+                  <FileText size={18} /> View Evidence Drill-Down
+                </button>
+              </div>
             </div>
+            <EvidenceModal 
+              result={scoringResult} 
+              isOpen={isEvidenceModalOpen} 
+              onClose={() => setIsEvidenceModalOpen(false)} 
+            />
           </div>
         )}
 

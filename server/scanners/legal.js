@@ -34,7 +34,16 @@ async function scanLegal(domain) {
         });
       }
     } catch (err) {
-      console.error(`OpenSanctions error for ${domain}:`, err.message);
+      if (err.response && [401, 403, 429].includes(err.response.status)) {
+         findings.push({
+           signalId: 'lr_fines',
+           hasFinding: false,
+           severity: 'Informational',
+           findingDetails: 'OpenSanctions API rate limited or invalid key. Skipping scan.',
+           source: 'OpenSanctions API'
+         });
+      }
+      console.warn(`[Legal] OpenSanctions API scan failed for ${domain}:`, err.message);
     }
   } else {
     // If no key, we assume no hit, or we can leave it empty

@@ -1,5 +1,4 @@
 const axios = require('axios');
-const tls = require('tls');
 const https = require('https');
 
 async function scanCybersecurity(domain) {
@@ -82,12 +81,19 @@ async function scanCybersecurity(domain) {
           }
         } catch (shodanErr) {
             if (shodanErr.response && shodanErr.response.status === 404) {
-               // 404 just means Shodan hasn't scanned this IP or found nothing
                findings.push({
                  signalId: 'cs_exposed_services',
                  hasFinding: false,
                  severity: 'Informational',
                  findingDetails: `No Shodan records found for ${ip}.`,
+                 source: 'Shodan API'
+               });
+            } else if (shodanErr.response && [401, 403, 429].includes(shodanErr.response.status)) {
+               findings.push({
+                 signalId: 'cs_exposed_services',
+                 hasFinding: false,
+                 severity: 'Informational',
+                 findingDetails: `Shodan API rate limited or invalid key. Skipping scan.`,
                  source: 'Shodan API'
                });
             } else {
@@ -96,7 +102,7 @@ async function scanCybersecurity(domain) {
         }
       }
     } catch (err) {
-      console.error(`Shodan API error for ${domain}:`, err.message);
+      console.warn(`[Cyber] Shodan API scan failed for ${domain}:`, err.message);
     }
   } else {
     console.log(`[Cyber] Skipping Shodan scan for ${domain} (No API Key)`);
@@ -104,7 +110,7 @@ async function scanCybersecurity(domain) {
 
   // 3. Security.txt check
   try {
-    const response = await axios.get(`https://${domain}/.well-known/security.txt`, { timeout: 3000 });
+    await axios.get(`https://${domain}/.well-known/security.txt`, { timeout: 3000 });
     findings.push({
       signalId: 'cs_security_txt',
       hasFinding: false,
@@ -112,7 +118,7 @@ async function scanCybersecurity(domain) {
       findingDetails: 'security.txt is published.',
       source: 'HTTP GET /.well-known/security.txt'
     });
-  } catch (err) {
+  } catch (_err) {
     findings.push({
       signalId: 'cs_security_txt',
       hasFinding: true,

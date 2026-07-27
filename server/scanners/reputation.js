@@ -76,7 +76,16 @@ async function scanReputation(domain) {
         });
       }
     } catch (err) {
-      console.error(`Negative News API error for ${domain}:`, err.message);
+      if (err.response && [401, 403, 429].includes(err.response.status)) {
+         findings.push({
+           signalId: 'rep_negative_news',
+           hasFinding: false,
+           severity: 'Informational',
+           findingDetails: 'News API rate limited or invalid key. Skipping scan.',
+           source: 'News API'
+         });
+      }
+      console.warn(`[Reputation] Negative News API scan failed for ${domain}:`, err.message);
     }
   } else {
     console.log(`[Reputation] Skipping News scan for ${domain} (No NewsAPI or MediaStack Key)`);
