@@ -112,5 +112,18 @@ We recently executed a batch run across 18 diverse domains to stress-test the en
 * **Result:** **Insufficient Data / Low Confidence**
 * **Explanation:** Because the domain doesn't exist, Shodan and the News APIs returned nothing. The scoring engine recognized the lack of data coverage and correctly flagged the vendor as having "Low Confidence" and refused to issue a verified passing grade.
 
+## 5. Future Implementation & Enhancements
+
+While the current system provides a strong foundation for automated OSINT TPRM scoring, the architecture is built to support the following high-impact enterprise enhancements:
+
+1. **Continuous Monitoring & Alerts (Active Scanning)**
+   * *Concept:* Transition from point-in-time scans to scheduled background scanning (daily/weekly). If a vendor's score drops suddenly (e.g., hit by a sanction), the system triggers immediate Slack/Email alerts to risk teams.
+2. **Expanded Cybersecurity Telemetry (4th-Party Risk)**
+   * *Concept:* Integrate HaveIBeenPwned API for dark web email dumps, check DMARC/SPF/DKIM for phishing susceptibility, and use Wappalyzer to map the vendor's tech stack against active CVEs for supply chain (4th-party) risk mapping.
+3. **Deep Financial & ESG Data Integration**
+   * *Concept:* Move beyond news keyword matching by integrating with financial APIs (Dun & Bradstreet, Alpha Vantage) to calculate quantitative financial distress indicators (Altman Z-Scores) and ESG sustainability metrics.
+4. **Historical Trend Analysis**
+   * *Concept:* Persist scan results to a time-series database (PostgreSQL/TimescaleDB) to visualize "Risk Trend Graphs" over time, enabling analysts to spot degrading security postures proactively.
+
 ---
 **End of Presentation Document**
