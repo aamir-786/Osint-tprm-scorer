@@ -20,7 +20,8 @@ export type CategoryKey =
   | 'stability'
   | 'reputation'
   | 'resilience'
-  | 'legal';
+  | 'legal'
+  | 'maturity';
 
 export interface CategoryMeta {
   key: CategoryKey;
@@ -128,4 +129,17 @@ export interface ScoringResult {
   unavailableSignals: { signalName: string; categoryName: string; reason: string }[];
   
   formattedMarkdown: string;
+}
+
+export interface AICategoryFinding {
+  name: string;
+  findings: string;
+  penaltyApplied: number;
+}
+
+export interface AIScoreResult {
+  finalScore: number;
+  grade: Grade;
+  summary: string;
+  categories: AICategoryFinding[];
 }

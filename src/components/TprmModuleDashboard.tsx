@@ -1,18 +1,23 @@
 import { useState, useMemo } from 'react';
-import type { AssessmentInput, ScoringResult, VendorIdentity } from '../types/tprm';
+import type { AssessmentInput, ScoringResult, VendorIdentity, AIScoreResult } from '../types/tprm';
 import { calculateTPRMScore } from '../engine/tprmEngine';
 
 import type { ScenarioPreset } from '../engine/presets';
 import { VendorIdentityHeader } from './VendorIdentityHeader';
 import { CategorySignalMatrix } from './CategorySignalMatrix';
 import { ScorecardView } from './ScorecardView';
+import { AIScorecardView } from './AIScorecardView';
 import { EvidenceModal } from './EvidenceModal';
 import { PresetSelector } from './PresetSelector';
-import { Download, Plus, LayoutGrid, FileText } from 'lucide-react';
+import { Download, LayoutGrid, FileText, X } from 'lucide-react';
 
 export function TprmModuleDashboard() {
   const [hasScanned, setHasScanned] = useState<boolean>(false);
   const [isEvidenceModalOpen, setIsEvidenceModalOpen] = useState(false);
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  const [aiScoreResult, setAiScoreResult] = useState<AIScoreResult | null>(null);
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | undefined>(undefined);
 
   // Initialize with an empty default for pristine start
   const [input, setInput] = useState<AssessmentInput>({
@@ -44,9 +49,24 @@ export function TprmModuleDashboard() {
     setInput(prev => ({ ...prev, identity }));
   };
 
-  const handleScanComplete = (scannedInput: AssessmentInput) => {
+  const handleScanComplete = async (scannedInput: AssessmentInput) => {
     setInput(scannedInput);
     setHasScanned(true);
+
+    const domain = scannedInput.identity.confirmedDomain;
+    if (domain) {
+      setIsAiLoading(true);
+      setAiError(undefined);
+      try {
+        const { runAIScore } = await import('../services/osintScannerService');
+        const aiResult = await runAIScore(domain);
+        setAiScoreResult(aiResult);
+      } catch (err: any) {
+        setAiError(err.message);
+      } finally {
+        setIsAiLoading(false);
+      }
+    }
   };
 
   const handleToggleDirectSanctions = (overrideDirectSanctionsOrBreach: boolean) => {
@@ -160,6 +180,10 @@ export function TprmModuleDashboard() {
                 }}
                 onToggleDirectSanction={handleToggleDirectSanctions}
                 onTogglePartialSanction={handleTogglePartialSanctions}
+                aiScoreResult={aiScoreResult}
+                isAiLoading={isAiLoading}
+                aiError={aiError}
+                onOpenAiModal={() => setIsAiModalOpen(true)}
               />
               <div style={{ padding: '0 20px 20px 20px', marginTop: '-10px' }}>
                 <button 
@@ -172,6 +196,31 @@ export function TprmModuleDashboard() {
                 </button>
               </div>
             </div>
+            {isAiModalOpen && (
+              <div style={{
+                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                backgroundColor: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(8px)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                zIndex: 9999, padding: '24px'
+              }}>
+                <div style={{
+                  background: '#ffffff', width: '100%', maxWidth: '900px', height: '90vh',
+                  borderRadius: '24px', display: 'flex', flexDirection: 'column',
+                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', overflow: 'hidden',
+                  animation: 'slideUp 0.3s ease-out'
+                }}>
+                  <div style={{ padding: '20px 32px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
+                    <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>AI Drill-Down</h2>
+                    <button onClick={() => setIsAiModalOpen(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px', color: '#64748b' }}>
+                      <X size={24} />
+                    </button>
+                  </div>
+                  <div style={{ flex: 1, overflowY: 'auto' }}>
+                    <AIScorecardView result={aiScoreResult} isLoading={isAiLoading} error={aiError} />
+                  </div>
+                </div>
+              </div>
+            )}
             <EvidenceModal 
               result={scoringResult} 
               isOpen={isEvidenceModalOpen} 

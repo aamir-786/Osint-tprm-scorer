@@ -13,23 +13,13 @@ export function calculateTPRMScore(input: AssessmentInput): ScoringResult {
   const categoryKeys = Object.keys(CATEGORIES) as CategoryKey[];
   
   // 1. Gather signal statuses and findings per category
-  const categoryCheckedCounts: Record<CategoryKey, number> = {
-    cybersecurity: 0,
-    compliance: 0,
-    stability: 0,
-    reputation: 0,
-    resilience: 0,
-    legal: 0,
-  };
-  
-  const categoryFindings: Record<CategoryKey, FindingRecord[]> = {
-    cybersecurity: [],
-    compliance: [],
-    stability: [],
-    reputation: [],
-    resilience: [],
-    legal: [],
-  };
+  const categoryCheckedCounts: Record<CategoryKey, number> = {} as any;
+  const categoryFindings: Record<CategoryKey, FindingRecord[]> = {} as any;
+
+  categoryKeys.forEach(k => {
+    categoryCheckedCounts[k] = 0;
+    categoryFindings[k] = [];
+  });
 
   const unavailableSignals: { signalName: string; categoryName: string; reason: string }[] = [];
 
@@ -106,24 +96,13 @@ export function calculateTPRMScore(input: AssessmentInput): ScoringResult {
   const totalSignalsChecked = Object.values(categoryCheckedCounts).reduce((a, b) => a + b, 0);
   const overallCoverage = totalSignalsChecked / TOTAL_PLANNED_SIGNALS;
   const isInsufficientData = overallCoverage < 0.40;
+  const initialEffectiveWeights: Record<CategoryKey, number> = {} as any;
+  const weightLostPerCat: Record<CategoryKey, number> = {} as any;
 
-  const initialEffectiveWeights: Record<CategoryKey, number> = {
-    cybersecurity: 0,
-    compliance: 0,
-    stability: 0,
-    reputation: 0,
-    resilience: 0,
-    legal: 0,
-  };
-
-  const weightLostPerCat: Record<CategoryKey, number> = {
-    cybersecurity: 0,
-    compliance: 0,
-    stability: 0,
-    reputation: 0,
-    resilience: 0,
-    legal: 0,
-  };
+  categoryKeys.forEach(k => {
+    initialEffectiveWeights[k] = 0;
+    weightLostPerCat[k] = 0;
+  });
 
   categoryKeys.forEach(catKey => {
     const meta = CATEGORIES[catKey];
@@ -143,14 +122,9 @@ export function calculateTPRMScore(input: AssessmentInput): ScoringResult {
   const totalLostWeight = Object.values(weightLostPerCat).reduce((a, b) => a + b, 0);
 
   const finalEffectiveWeights: Record<CategoryKey, number> = { ...initialEffectiveWeights };
-  const redistributedWeightGained: Record<CategoryKey, number> = {
-    cybersecurity: 0,
-    compliance: 0,
-    stability: 0,
-    reputation: 0,
-    resilience: 0,
-    legal: 0,
-  };
+  const redistributedWeightGained: Record<CategoryKey, number> = {} as any;
+  
+  categoryKeys.forEach(k => redistributedWeightGained[k] = 0);
 
   if (totalLostWeight > 0) {
     categoryKeys.forEach(targetCat => {

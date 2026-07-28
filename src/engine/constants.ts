@@ -12,7 +12,7 @@ export const CATEGORIES: Record<CategoryKey, CategoryMeta> = {
   cybersecurity: {
     key: 'cybersecurity',
     name: 'Cybersecurity',
-    weight: 0.30,
+    weight: 0.25,
     plannedSignalsCount: 6,
     signals: [
       { id: 'cs_ssl', name: 'SSL Grade & Cert', category: 'cybersecurity', description: 'SSL grade (A-F) and TLS configuration', defaultSeverityIfFailed: 'Critical' },
@@ -26,7 +26,7 @@ export const CATEGORIES: Record<CategoryKey, CategoryMeta> = {
   compliance: {
     key: 'compliance',
     name: 'Compliance & Privacy',
-    weight: 0.20,
+    weight: 0.15,
     plannedSignalsCount: 3,
     signals: [
       { id: 'cp_iso_csa', name: 'ISO 27001 / CSA STAR Listing', category: 'compliance', description: 'Verifiable third-party security certification registry', defaultSeverityIfFailed: 'Medium' },
@@ -77,9 +77,18 @@ export const CATEGORIES: Record<CategoryKey, CategoryMeta> = {
       { id: 'lr_historical_action', name: 'Historical Regulatory Actions', category: 'legal', description: 'Resolved past regulatory fines or enforcement', defaultSeverityIfFailed: 'Medium' },
     ],
   },
+  maturity: {
+    key: 'maturity',
+    name: 'Business Maturity',
+    weight: 0.10,
+    plannedSignalsCount: 1,
+    signals: [
+      { id: 'bm_domain_age', name: 'Domain Registration Age', category: 'maturity', description: 'Operational history and track record based on domain age', defaultSeverityIfFailed: 'High' },
+    ],
+  },
 };
 
-export const TOTAL_PLANNED_SIGNALS = 20;
+export const TOTAL_PLANNED_SIGNALS = 21;
 
 export function getGradeFromScore(score: number): Grade {
   if (score >= 801) return 'A';

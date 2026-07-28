@@ -229,3 +229,12 @@ export async function runRealtimeOSINTScan(
     overrideDetails: profile?.hasSanctionHit ? 'Direct OFAC Sanction match flag triggered' : undefined,
   };
 }
+
+export async function runAIScore(domain: string): Promise<any> {
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+  const response = await fetch(`${BACKEND_URL}/api/ai-score?domain=${encodeURIComponent(domain)}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch AI Score');
+  }
+  return response.json();
+}

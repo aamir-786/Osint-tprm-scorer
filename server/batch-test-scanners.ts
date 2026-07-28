@@ -3,6 +3,7 @@ import { scanCompliance } from './scanners/compliance';
 import { scanBusinessStability } from './scanners/businessStability';
 import { scanReputation } from './scanners/reputation';
 import { scanLegal } from './scanners/legal';
+import { scanMaturity } from './scanners/maturity';
 import { calculateTPRMScore } from '../src/engine/tprmEngine';
 import type { AssessmentInput, SignalStatus } from '../src/types/tprm';
 import dotenv from 'dotenv';
@@ -47,12 +48,13 @@ async function runBatchTests() {
         scanCompliance(test.domain).catch(e => { result.error += `Compliance Err; `; return []; }),
         scanBusinessStability(test.domain).catch(e => { result.error += `Stability Err; `; return []; }),
         scanReputation(test.domain).catch(e => { result.error += `Reputation Err; `; return []; }),
-        scanLegal(test.domain).catch(e => { result.error += `Legal Err; `; return []; })
+        scanLegal(test.domain).catch(e => { result.error += `Legal Err; `; return []; }),
+        scanMaturity(test.domain).catch(e => { result.error += `Maturity Err; `; return []; })
       ]);
 
-      const [cyber, compliance, stability, reputation, legal] = await Promise.race([scanPromise, timeoutPromise]) as any[];
+      const [cyber, compliance, stability, reputation, legal, maturity] = await Promise.race([scanPromise, timeoutPromise]) as any[];
 
-      const allFindings = [...cyber, ...compliance, ...stability, ...reputation, ...legal];
+      const allFindings = [...cyber, ...compliance, ...stability, ...reputation, ...legal, ...maturity];
       result.totalFindings = allFindings.length;
 
       // Map to SignalStatuses

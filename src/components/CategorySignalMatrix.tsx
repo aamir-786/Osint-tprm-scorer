@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { AssessmentInput, CategoryKey, Severity, SignalStatus, FindingRecord } from '../types/tprm';
 import { CATEGORIES } from '../engine/constants';
-import { Shield, Lock, FileCheck, TrendingUp, AlertTriangle, Scale, Plus, Server, CheckSquare, Square, Search, HelpCircle, Trash2 } from 'lucide-react';
+import { Shield, Lock, FileCheck, TrendingUp, AlertTriangle, Scale, Plus, Server, CheckSquare, Square, Search, HelpCircle, Trash2, Clock } from 'lucide-react';
 
 interface Props {
   input: AssessmentInput;
@@ -15,9 +15,16 @@ const CATEGORY_ICONS: Record<CategoryKey, any> = {
   reputation: AlertTriangle,
   resilience: FileCheck,
   legal: Scale,
+  maturity: Clock,
 };
 
 const SEVERITY_GUIDANCE: Record<CategoryKey, string[]> = {
+  maturity: [
+    'Informational: Domain age > 5 years. Proven track record.',
+    'Low (-10): Domain age 2-5 years. Relatively young.',
+    'Medium (-30): Domain age 6 months - 2 years. Recent startup territory.',
+    'High (-70): Domain age < 6 months. Brand new entity. Unproven.'
+  ],
   cybersecurity: [
     'Critical (-150): SSL grade D/F or exposed critical service/database (Elastic, RDP, SSH, DB port)',
     'High (-70): Expired SSL certificate or exposed non-critical service',

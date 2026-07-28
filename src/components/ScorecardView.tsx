@@ -1,6 +1,6 @@
-import type { ScoringResult, CategoryKey } from '../types/tprm';
+import type { ScoringResult, CategoryKey, AIScoreResult } from '../types/tprm';
 import { CATEGORIES } from '../engine/constants';
-import { ShieldAlert, AlertTriangle, Award, Scale } from 'lucide-react';
+import { ShieldAlert, AlertTriangle, Award, Scale, Bot } from 'lucide-react';
 
 interface Props {
   result: ScoringResult;
@@ -11,6 +11,10 @@ interface Props {
   };
   onToggleDirectSanction: (val: boolean) => void;
   onTogglePartialSanction: (val: boolean) => void;
+  aiScoreResult?: AIScoreResult | null;
+  isAiLoading?: boolean;
+  aiError?: string;
+  onOpenAiModal?: () => void;
 }
 
 export const ScorecardView: React.FC<Props> = ({
@@ -18,6 +22,10 @@ export const ScorecardView: React.FC<Props> = ({
   inputOverrides,
   onToggleDirectSanction,
   onTogglePartialSanction,
+  aiScoreResult,
+  isAiLoading,
+  aiError,
+  onOpenAiModal,
 }) => {
   const {
     isInsufficientData,
@@ -109,6 +117,39 @@ export const ScorecardView: React.FC<Props> = ({
             {overallGrade}
           </div>
         )}
+      </div>
+
+      {/* Mini AI Summary Card */}
+      <div style={{ background: 'linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%)', border: '1px solid #c7d2fe', borderRadius: '16px', padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: 0, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ background: '#e0e7ff', padding: '12px', borderRadius: '12px' }}>
+            <Bot size={24} color="#4f46e5" />
+          </div>
+          <div>
+            <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Independent AI Score</div>
+            {isAiLoading ? (
+              <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#475569', animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}>Evaluating...</div>
+            ) : aiError ? (
+              <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#ef4444' }}>Failed to score</div>
+            ) : aiScoreResult ? (
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                 <span style={{ fontSize: '1.4rem', fontWeight: 900, color: '#1e1b4b' }}>{aiScoreResult.finalScore}</span>
+                 <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#818cf8' }}>/ 950</span>
+                 <span style={{ marginLeft: '6px', background: '#4f46e5', color: 'white', padding: '2px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 800 }}>{aiScoreResult.grade}</span>
+              </div>
+            ) : (
+              <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#94a3b8' }}>Not Available</div>
+            )}
+          </div>
+        </div>
+        
+        <button 
+          disabled={!aiScoreResult && !aiError}
+          onClick={onOpenAiModal}
+          style={{ padding: '10px 16px', background: '#312e81', color: 'white', border: 'none', borderRadius: '10px', fontSize: '0.85rem', fontWeight: 700, cursor: (!aiScoreResult && !aiError) ? 'not-allowed' : 'pointer', opacity: (!aiScoreResult && !aiError) ? 0.5 : 1, transition: 'background 0.2s' }}
+        >
+          View Complete Details
+        </button>
       </div>
 
       {/* Insufficient Data Alert */}

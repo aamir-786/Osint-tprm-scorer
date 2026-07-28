@@ -6,6 +6,8 @@ const { scanCompliance } = require('./scanners/compliance');
 const { scanBusinessStability } = require('./scanners/businessStability');
 const { scanReputation } = require('./scanners/reputation');
 const { scanLegal } = require('./scanners/legal');
+const { scanMaturity } = require('./scanners/maturity');
+const { generateAIScore } = require('./routes/aiScorer');
 
 const path = require('path');
 
@@ -35,13 +37,15 @@ app.get('/api/scan', async (req, res) => {
       complianceResults,
       stabilityResults,
       reputationResults,
-      legalResults
+      legalResults,
+      maturityResults
     ] = await Promise.all([
       scanCybersecurity(domain),
       scanCompliance(domain),
       scanBusinessStability(domain),
       scanReputation(domain),
-      scanLegal(domain)
+      scanLegal(domain),
+      scanMaturity(domain)
     ]);
 
     // Combine all findings
@@ -50,7 +54,8 @@ app.get('/api/scan', async (req, res) => {
       ...complianceResults,
       ...stabilityResults,
       ...reputationResults,
-      ...legalResults
+      ...legalResults,
+      ...maturityResults
     ];
 
     console.log(`[OSINT Backend] Scan complete for ${domain}. Total findings: ${allFindings.length}`);
@@ -76,6 +81,24 @@ app.get('/api/scan', async (req, res) => {
   } catch (error) {
     console.error(`[OSINT Backend] Scan failed for ${domain}:`, error.message);
     res.status(500).json({ error: 'Internal Server Error during OSINT scan' });
+  }
+});
+
+// AI Scoring Endpoint
+app.get('/api/ai-score', async (req, res) => {
+  const { domain } = req.query;
+
+  if (!domain) {
+    return res.status(400).json({ error: 'Domain is required' });
+  }
+
+  try {
+    console.log(`[AI Scorer] Generating AI score for: ${domain}`);
+    const result = await generateAIScore(domain);
+    res.json(result);
+  } catch (error) {
+    console.error(`[AI Scorer] Failed for ${domain}:`, error.message);
+    res.status(500).json({ error: 'Failed to generate AI score' });
   }
 });
 

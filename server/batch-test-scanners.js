@@ -3,6 +3,7 @@ const { scanCompliance } = require('./scanners/compliance');
 const { scanBusinessStability } = require('./scanners/businessStability');
 const { scanReputation } = require('./scanners/reputation');
 const { scanLegal } = require('./scanners/legal');
+const { scanMaturity } = require('./scanners/maturity');
 const { calculateTPRMScore } = require('../src/engine/tprmEngine');
 const dotenv = require('dotenv');
 const fs = require('fs');
@@ -35,7 +36,7 @@ async function runBatchTests() {
   console.log(`Starting Batch Test with Scoring for ${testCases.length} domains...\n`);
   
   const results = [];
-  let csvContent = "Domain,Category,Status,Cyber,Compliance,Stability,Reputation,Legal,Total Findings,Final Score,Grade,Confidence,Insufficient Data,Error Details\n";
+  let csvContent = "Domain,Category,Status,Cyber,Compliance,Stability,Reputation,Legal,Maturity,Total Findings,Final Score,Grade,Confidence,Insufficient Data,Error Details\n";
 
   for (const test of testCases) {
     console.log(`Scanning & Scoring [${test.domain}]...`);
@@ -48,6 +49,7 @@ async function runBatchTests() {
       stability: 0,
       reputation: 0,
       legal: 0,
+      maturity: 0,
       total: 0,
       score: 0,
       grade: '-',
@@ -63,18 +65,20 @@ async function runBatchTests() {
         scanCompliance(test.domain).catch(e => { result.error += `Compliance Error; `; return []; }),
         scanBusinessStability(test.domain).catch(e => { result.error += `Stability Error; `; return []; }),
         scanReputation(test.domain).catch(e => { result.error += `Reputation Error; `; return []; }),
-        scanLegal(test.domain).catch(e => { result.error += `Legal Error; `; return []; })
+        scanLegal(test.domain).catch(e => { result.error += `Legal Error; `; return []; }),
+        scanMaturity(test.domain).catch(e => { result.error += `Maturity Error; `; return []; })
       ]);
 
-      const [cyber, compliance, stability, reputation, legal] = await Promise.race([scanPromise, timeoutPromise]);
+      const [cyber, compliance, stability, reputation, legal, maturity] = await Promise.race([scanPromise, timeoutPromise]);
 
       result.cyber = cyber.length;
       result.compliance = compliance.length;
       result.stability = stability.length;
       result.reputation = reputation.length;
       result.legal = legal.length;
+      result.maturity = maturity.length;
       
-      const allFindings = [...cyber, ...compliance, ...stability, ...reputation, ...legal];
+      const allFindings = [...cyber, ...compliance, ...stability, ...reputation, ...legal, ...maturity];
       result.total = allFindings.length;
       
       // Convert to signalStatuses
@@ -122,7 +126,7 @@ async function runBatchTests() {
 
     console.log(`  -> Status: ${result.status} | Findings: ${result.total} | Score: ${result.score} | Grade: ${result.grade}`);
     
-    csvContent += `"${result.domain}","${result.category}","${result.status}",${result.cyber},${result.compliance},${result.stability},${result.reputation},${result.legal},${result.total},${result.score},"${result.grade}","${result.confidence}",${result.insufficientData},"${result.error}"\n`;
+    csvContent += `"${result.domain}","${result.category}","${result.status}",${result.cyber},${result.compliance},${result.stability},${result.reputation},${result.legal},${result.maturity},${result.total},${result.score},"${result.grade}","${result.confidence}",${result.insufficientData},"${result.error}"\n`;
     
     // 3s delay to survive rate limits
     await new Promise(res => setTimeout(res, 3000));

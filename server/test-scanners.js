@@ -3,6 +3,7 @@ const { scanCompliance } = require('./scanners/compliance');
 const { scanBusinessStability } = require('./scanners/businessStability');
 const { scanReputation } = require('./scanners/reputation');
 const { scanLegal } = require('./scanners/legal');
+const { scanMaturity } = require('./scanners/maturity');
 const dotenv = require('dotenv');
 
 const path = require('path');
@@ -34,6 +35,10 @@ async function runTests() {
       console.log('Testing Legal...');
       const legal = await scanLegal(domain);
       console.log('Legal returned', legal.length, 'findings');
+
+      console.log('Testing Maturity...');
+      const maturity = await scanMaturity(domain);
+      console.log('Maturity returned', maturity.length, 'findings');
 
       console.log(`Success for ${domain}`);
     } catch (e) {
