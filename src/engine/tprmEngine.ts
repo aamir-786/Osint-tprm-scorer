@@ -81,7 +81,7 @@ export function calculateTPRMScore(input: AssessmentInput): ScoringResult {
       }
     });
 
-    categoryFindings.cybersecurity = weakestAsset.cybersecurityPenalties;
+    categoryFindings.security_privacy = weakestAsset.cybersecurityPenalties;
     weakestAssetInfo = {
       assetId: weakestAsset.assetId,
       name: weakestAsset.name,
@@ -192,7 +192,7 @@ export function calculateTPRMScore(input: AssessmentInput): ScoringResult {
   // 4. Determine overall confidence (Weakest link rule)
   const confidenceOrder: Record<Confidence, number> = { High: 3, Medium: 2, Low: 1 };
   let weakestConfidence: Confidence = 'High';
-  let weakestCategoryName = CATEGORIES.cybersecurity.name;
+  let weakestCategoryName = CATEGORIES.security_privacy.name;
   let minConfScore = 99;
 
   categoryKeys.forEach(catKey => {

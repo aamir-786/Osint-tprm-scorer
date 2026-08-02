@@ -25,23 +25,47 @@ async function scanCybersecurity(domain) {
       });
     }
   } catch (err) {
-    findings.push({
-      signalId: 'cs_ssl',
-      hasFinding: true,
-      severity: 'Critical',
-      findingDetails: `Failed to establish secure TLS connection: ${err.message}`,
-      source: 'Native TLS Check'
-    });
+    if (err.message && err.message.includes('ENOTFOUND')) {
+      findings.push({
+        signalId: 'cs_ssl',
+        hasFinding: false,
+        severity: 'Informational',
+        findingDetails: `Domain does not resolve to an IP (${err.message}). Cannot verify SSL.`,
+        source: 'Native TLS Check'
+      });
+    } else {
+      findings.push({
+        signalId: 'cs_ssl',
+        hasFinding: true,
+        severity: 'Critical',
+        findingDetails: `Failed to establish secure TLS connection: ${err.message}`,
+        source: 'Native TLS Check'
+      });
+    }
   }
 
   // 2. Exposed Services Check (Shodan API)
   const shodanKey = process.env.SHODAN_API_KEY;
   if (shodanKey) {
     try {
-      // Free Shodan Dev API keys cannot use /shodan/host/search. 
-      // We must resolve the domain to an IP first, then use /shodan/host/{ip}
       const dns = require('dns').promises;
-      const { address } = await dns.lookup(domain);
+      let address;
+      try {
+        const lookupRes = await dns.lookup(domain);
+        address = lookupRes.address;
+      } catch (dnsErr) {
+        if (dnsErr.code === 'ENOTFOUND') {
+          findings.push({
+            signalId: 'cs_exposed_services',
+            hasFinding: false,
+            severity: 'Informational',
+            findingDetails: 'Domain does not resolve to an IP. Cannot run Shodan scan.',
+            source: 'Shodan API'
+          });
+        } else {
+          throw dnsErr;
+        }
+      }
       
       if (address) {
         const ip = address;
@@ -50,32 +74,55 @@ async function scanCybersecurity(domain) {
           
           if (response.data && response.data.ports) {
             const ports = response.data.ports;
+            
+            // Validate data maps to vendor
+            let vendorVerified = false;
+            if (response.data.hostnames && response.data.hostnames.some(h => h.includes(domain))) {
+              vendorVerified = true;
+            } else if (response.data.domains && response.data.domains.some(d => d.includes(domain))) {
+              vendorVerified = true;
+            }
+            const verificationNote = vendorVerified ? '(Verified via Shodan Hostnames)' : '(Verified via DNS IP Resolution)';
+
+            const safePorts = [80, 443, 8080, 8443];
             const criticalPorts = [3389, 22, 23, 21, 1433, 3306, 27017, 9200];
+            
             const exposedCritical = ports.filter(p => criticalPorts.includes(p));
+            const exposedOther = ports.filter(p => !safePorts.includes(p) && !criticalPorts.includes(p));
 
             if (exposedCritical.length > 0) {
               findings.push({
                 signalId: 'cs_exposed_services',
                 hasFinding: true,
                 severity: 'High',
-                findingDetails: `Exposed critical ports detected on ${ip}: ${exposedCritical.join(', ')}`,
+                findingDetails: `Unnecessary critical ports (closed ones) are OPEN on ${ip}: ${exposedCritical.join(', ')} ${verificationNote}`,
                 source: 'Shodan API'
               });
-            } else {
+            } else if (exposedOther.length > 0) {
               findings.push({
                 signalId: 'cs_exposed_services',
                 hasFinding: true,
                 severity: 'Low',
-                findingDetails: `Exposed non-standard ports detected on ${ip}: ${ports.join(', ')}`,
+                findingDetails: `Unnecessary non-standard ports (closed ones) are OPEN on ${ip}: ${exposedOther.join(', ')} ${verificationNote}`,
+                source: 'Shodan API'
+              });
+            } else {
+              // Only necessary open ports found (e.g. 80, 443) -> No penalty
+              findings.push({
+                signalId: 'cs_exposed_services',
+                hasFinding: false,
+                severity: 'Informational',
+                findingDetails: `Only necessary open web ports exposed on ${ip} (No Penalty): ${ports.join(', ')} ${verificationNote}`,
                 source: 'Shodan API'
               });
             }
           } else {
+            // All ports closed -> No penalty
             findings.push({
               signalId: 'cs_exposed_services',
               hasFinding: false,
               severity: 'Informational',
-              findingDetails: `No exposed ports found on ${ip}.`,
+              findingDetails: `All unnecessary ports are properly closed on ${ip} (No Penalty).`,
               source: 'Shodan API'
             });
           }
@@ -89,11 +136,12 @@ async function scanCybersecurity(domain) {
                  source: 'Shodan API'
                });
             } else if (shodanErr.response && [401, 403, 429].includes(shodanErr.response.status)) {
+               // Per user instruction: Explicitly state API is exhausted/unavailable. No fallbacks.
                findings.push({
                  signalId: 'cs_exposed_services',
                  hasFinding: false,
                  severity: 'Informational',
-                 findingDetails: `Shodan API rate limited or invalid key. Skipping scan.`,
+                 findingDetails: `API request limit exhausted or unavailable. Cannot verify this signal.`,
                  source: 'Shodan API'
                });
             } else {
@@ -103,9 +151,22 @@ async function scanCybersecurity(domain) {
       }
     } catch (err) {
       console.warn(`[Cyber] Shodan API scan failed for ${domain}:`, err.message);
+      findings.push({
+        signalId: 'cs_exposed_services',
+        hasFinding: false,
+        severity: 'Informational',
+        findingDetails: `API request failed: ${err.message}. Cannot verify this signal.`,
+        source: 'Shodan API'
+      });
     }
   } else {
-    console.log(`[Cyber] Skipping Shodan scan for ${domain} (No API Key)`);
+    findings.push({
+      signalId: 'cs_exposed_services',
+      hasFinding: false,
+      severity: 'Informational',
+      findingDetails: `API request limit exhausted or unavailable (No Key). Cannot verify this signal.`,
+      source: 'Shodan API'
+    });
   }
 
   // 3. Security.txt check

@@ -15,13 +15,11 @@ export interface SignalDefinition {
 }
 
 export type CategoryKey = 
-  | 'cybersecurity'
-  | 'compliance'
-  | 'stability'
-  | 'reputation'
-  | 'resilience'
-  | 'legal'
-  | 'maturity';
+  | 'security_privacy'
+  | 'reliability_maturity'
+  | 'financial_health'
+  | 'reputation_ethics'
+  | 'legal_geopolitical';
 
 export interface CategoryMeta {
   key: CategoryKey;

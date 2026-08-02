@@ -7,6 +7,10 @@ const { scanBusinessStability } = require('./scanners/businessStability');
 const { scanReputation } = require('./scanners/reputation');
 const { scanLegal } = require('./scanners/legal');
 const { scanMaturity } = require('./scanners/maturity');
+const { scanESG } = require('./scanners/esg');
+const { scanGeopolitical } = require('./scanners/geopolitical');
+const { scanNthParty } = require('./scanners/nth_party');
+const { scanResilience } = require('./scanners/resilience');
 const { generateAIScore } = require('./routes/aiScorer');
 
 const path = require('path');
@@ -38,14 +42,22 @@ app.get('/api/scan', async (req, res) => {
       stabilityResults,
       reputationResults,
       legalResults,
-      maturityResults
+      maturityResults,
+      esgResults,
+      geoResults,
+      nthPartyResults,
+      resilienceResults
     ] = await Promise.all([
       scanCybersecurity(domain),
       scanCompliance(domain),
       scanBusinessStability(domain),
       scanReputation(domain),
       scanLegal(domain),
-      scanMaturity(domain)
+      scanMaturity(domain),
+      scanESG(domain),
+      scanGeopolitical(domain),
+      scanNthParty(domain),
+      scanResilience(domain)
     ]);
 
     // Combine all findings
@@ -55,7 +67,11 @@ app.get('/api/scan', async (req, res) => {
       ...stabilityResults,
       ...reputationResults,
       ...legalResults,
-      ...maturityResults
+      ...maturityResults,
+      ...esgResults,
+      ...geoResults,
+      ...nthPartyResults,
+      ...resilienceResults
     ];
 
     console.log(`[OSINT Backend] Scan complete for ${domain}. Total findings: ${allFindings.length}`);

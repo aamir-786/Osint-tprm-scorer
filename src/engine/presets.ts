@@ -120,27 +120,32 @@ export const PRESET_SCENARIOS: ScenarioPreset[] = [
       multiAsset: false,
       assets: [],
       signalStatuses: {
+        // Undercover security_privacy: 3 out of 7 checked
         cs_ssl: { signalId: 'cs_ssl', checked: true, hasFinding: false },
         cs_cert_validity: { signalId: 'cs_cert_validity', checked: true, hasFinding: false },
-        
-        cp_iso_csa: { signalId: 'cp_iso_csa', checked: true, hasFinding: false },
         cp_privacy_policy: { signalId: 'cp_privacy_policy', checked: true, hasFinding: false },
-        cp_dpa: { signalId: 'cp_dpa', checked: true, hasFinding: false },
         
-        bs_registration_age: { signalId: 'bs_registration_age', checked: true, hasFinding: false },
-        bs_insolvency: { signalId: 'bs_insolvency', checked: true, hasFinding: false },
-        bs_layoffs_funding: { signalId: 'bs_layoffs_funding', checked: true, hasFinding: false },
+        // Fully cover reliability_maturity: 6 out of 6
+        bm_domain_age: { signalId: 'bm_domain_age', checked: true, hasFinding: false },
+        bm_public_market: { signalId: 'bm_public_market', checked: true, hasFinding: false },
+        bm_wikipedia: { signalId: 'bm_wikipedia', checked: true, hasFinding: false },
+        res_status_page: { signalId: 'res_status_page', checked: true, hasFinding: false },
+        nth_cloud_hosting: { signalId: 'nth_cloud_hosting', checked: true, hasFinding: false },
+        nth_email_provider: { signalId: 'nth_email_provider', checked: true, hasFinding: false },
+
+        // Fully cover financial_health: 2 out of 2
+        bs_bankruptcy: { signalId: 'bs_bankruptcy', checked: true, hasFinding: false },
+        bs_layoffs: { signalId: 'bs_layoffs', checked: true, hasFinding: false },
         
+        // Fully cover reputation_ethics: 4 out of 4
+        rep_negative_news: { signalId: 'rep_negative_news', checked: true, hasFinding: false },
         rep_breach_history: { signalId: 'rep_breach_history', checked: true, hasFinding: false },
-        rep_sustained_negative: { signalId: 'rep_sustained_negative', checked: true, hasFinding: false },
-        rep_isolated_mention: { signalId: 'rep_isolated_mention', checked: true, hasFinding: false },
+        esg_sustainability: { signalId: 'esg_sustainability', checked: true, hasFinding: false },
+        esg_modern_slavery: { signalId: 'esg_modern_slavery', checked: true, hasFinding: false },
         
-        or_status_page: { signalId: 'or_status_page', checked: true, hasFinding: false },
-        or_incident_history: { signalId: 'or_incident_history', checked: true, hasFinding: false },
-        
-        lr_sanctions: { signalId: 'lr_sanctions', checked: true, hasFinding: false },
-        lr_export_regulatory: { signalId: 'lr_export_regulatory', checked: true, hasFinding: false },
-        lr_historical_action: { signalId: 'lr_historical_action', checked: true, hasFinding: false },
+        // Fully cover legal_geopolitical: 2 out of 2
+        lr_fines: { signalId: 'lr_fines', checked: true, hasFinding: false },
+        geo_hosting_location: { signalId: 'geo_hosting_location', checked: true, hasFinding: false },
       },
       customFindings: [],
       overrideDirectSanctionsOrBreach: false,
@@ -172,7 +177,7 @@ export const PRESET_SCENARIOS: ScenarioPreset[] = [
           cybersecurityPenalties: [
             {
               id: 'f_legacy_cve',
-              category: 'cybersecurity',
+              category: 'security_privacy',
               signalId: 'cs_cves',
               title: 'Exposed unpatched CVE-2024-3094 on web app server',
               severity: 'High',
@@ -182,7 +187,7 @@ export const PRESET_SCENARIOS: ScenarioPreset[] = [
             },
             {
               id: 'f_legacy_headers',
-              category: 'cybersecurity',
+              category: 'security_privacy',
               signalId: 'cs_headers',
               title: 'Missing HSTS & Content-Security-Policy headers',
               severity: 'Medium',
@@ -192,7 +197,7 @@ export const PRESET_SCENARIOS: ScenarioPreset[] = [
             },
             {
               id: 'f_no_sectxt',
-              category: 'cybersecurity',
+              category: 'security_privacy',
               signalId: 'cs_security_txt',
               title: 'security.txt missing',
               severity: 'Low',

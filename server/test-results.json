@@ -1,0 +1,466 @@
+{
+  "openai.com": {
+    "cybersecurity": [
+      {
+        "signalId": "cs_ssl",
+        "hasFinding": false,
+        "severity": "Informational",
+        "findingDetails": "SSL Certificate is valid for 77 days.",
+        "source": "Native TLS Check"
+      },
+      {
+        "signalId": "cs_exposed_services",
+        "hasFinding": true,
+        "severity": "Low",
+        "findingDetails": "Unnecessary non-standard ports (closed ones) are OPEN on 172.64.154.211: 2096, 2082, 2083, 2052, 2053, 2086, 2087, 2095, 8880 (Verified via Shodan Hostnames)",
+        "source": "Shodan API"
+      },
+      {
+        "signalId": "cs_security_txt",
+        "hasFinding": false,
+        "severity": "Informational",
+        "findingDetails": "security.txt is published.",
+        "source": "HTTP GET /.well-known/security.txt"
+      }
+    ],
+    "compliance": [
+      {
+        "signalId": "cp_privacy_policy",
+        "hasFinding": true,
+        "severity": "Medium",
+        "findingDetails": "No Privacy Policy links detected in the rendered DOM.",
+        "source": "Puppeteer DOM Scraper"
+      }
+    ],
+    "businessStability": [
+      {
+        "signalId": "bs_bankruptcy",
+        "hasFinding": true,
+        "severity": "Critical",
+        "findingDetails": "News or AI detected potential bankruptcy (multiple signals found).",
+        "source": "News/AI API"
+      },
+      {
+        "signalId": "bs_layoffs",
+        "hasFinding": true,
+        "severity": "High",
+        "findingDetails": "News or AI detected mass layoffs (multiple signals found).",
+        "source": "News/AI API"
+      }
+    ],
+    "reputation": [
+      {
+        "signalId": "rep_negative_news",
+        "hasFinding": true,
+        "severity": "High",
+        "findingDetails": "AI Summary: OpenAI is facing a trade secrets lawsuit from Apple, alleging the company's hardware head requested unreleased product samples from job candidates. This is among multiple lawsuits OpenAI has encountered throughout the year.",
+        "source": "NewsAPI",
+        "evidencePayload": [
+          {
+            "title": "Sam Altman didn’t need another lawsuit",
+            "description": "OpenAI has spent the better part of the year involved in lawsuit after lawsuit, including one from the world's richest man. But last Friday, the company was hit with one of the highest-profile legal actions yet - from Apple. OpenAI's expensive hardware bet is…",
+            "url": "https://www.theverge.com/ai-artificial-intelligence/965294/openai-apple-trade-secrets-lawsuit-sam-altman-ipo",
+            "source": "The Verge"
+          },
+          {
+            "title": "The 6 wildest claims in Apple’s lawsuit against OpenAI",
+            "description": "When Apple employees interviewed for jobs at OpenAI, the AI startup's hardware head allegedly asked them to show up with something unusual: components they were working on and unreleased product samples. That's according to a blockbuster lawsuit filed by Appl…",
+            "url": "https://www.theverge.com/tech/964843/apple-openai-lawsuit-wildest-claims",
+            "source": "The Verge"
+          },
+          {
+            "title": "Apple’s Lawsuit Against OpenAI Sparks Another Musk-Altman Online Spat",
+            "description": "The Silicon Valley billionaires are fighting again.",
+            "url": "https://gizmodo.com/apples-lawsuit-against-openai-sparks-another-musk-altman-online-spat-2000784826",
+            "source": "Gizmodo.com"
+          },
+          {
+            "title": "Apple’s OpenAI lawsuit is about who gets to define the post-smartphone era",
+            "description": "Today on Decoder, I’m talking with Hayden Field, The Verge’s senior AI reporter, about the major trade secrets lawsuit between Apple and OpenAI and what this tells us about OpenAI’s future. By now I’m sure most Decoder listeners are familiar with Apple’s alle…",
+            "url": "https://www.theverge.com/podcast/968787/apple-openai-trade-secrets-lawsuit-ai-hardware-smartphone-jony-ive",
+            "source": "The Verge"
+          },
+          {
+            "title": "Apple’s plot to crush OpenAI",
+            "description": "Apple is suing OpenAI. The complaint is readable and intense, as these things often are, though many experts seem to think many of the allegations are just the ways things are done. So what does Apple really want here, and why is it picking such a public figh…",
+            "url": "https://www.theverge.com/podcast/967244/apple-openai-lawsuit-vergecast",
+            "source": "The Verge"
+          }
+        ]
+      },
+      {
+        "signalId": "rep_breach_history",
+        "hasFinding": false,
+        "severity": "Informational",
+        "findingDetails": "API request limit exhausted or unavailable. Cannot verify this signal.",
+        "source": "External API"
+      }
+    ],
+    "legal": [
+      {
+        "signalId": "lr_fines",
+        "hasFinding": false,
+        "severity": "Informational",
+        "findingDetails": "API request limit exhausted or unavailable. Cannot verify this signal.",
+        "source": "OpenSanctions API"
+      }
+    ],
+    "maturity": [
+      {
+        "signalId": "bm_domain_age",
+        "hasFinding": false,
+        "severity": "Informational",
+        "findingDetails": "Domain is established (19.5 years old).",
+        "source": "WHOIS"
+      },
+      {
+        "signalId": "bm_public_market",
+        "hasFinding": true,
+        "severity": "Low",
+        "findingDetails": "Company is not publicly traded (Private or Startup).",
+        "source": "Yahoo Finance API"
+      },
+      {
+        "signalId": "bm_wikipedia",
+        "hasFinding": false,
+        "severity": "Informational",
+        "findingDetails": "Global notability verified by AI: OpenAI has a dedicated and comprehensive Wikipedia page, which serves as a strong indicator of its global recognition and notability according to Wikipedia's established criteria for organizations.",
+        "source": "Gemini AI (Wikipedia)"
+      }
+    ]
+  },
+  "yandex.ru": {
+    "cybersecurity": [
+      {
+        "signalId": "cs_ssl",
+        "hasFinding": false,
+        "severity": "Informational",
+        "findingDetails": "SSL Certificate is valid for 150 days.",
+        "source": "Native TLS Check"
+      },
+      {
+        "signalId": "cs_exposed_services",
+        "hasFinding": false,
+        "severity": "Informational",
+        "findingDetails": "Only necessary open web ports exposed on 2a02:6b8:a::a (No Penalty): 80, 443 (Verified via Shodan Hostnames)",
+        "source": "Shodan API"
+      },
+      {
+        "signalId": "cs_security_txt",
+        "hasFinding": false,
+        "severity": "Informational",
+        "findingDetails": "security.txt is published.",
+        "source": "HTTP GET /.well-known/security.txt"
+      }
+    ],
+    "compliance": [
+      {
+        "signalId": "cp_privacy_policy",
+        "hasFinding": true,
+        "severity": "Medium",
+        "findingDetails": "No Privacy Policy links detected in the rendered DOM.",
+        "source": "Puppeteer DOM Scraper"
+      }
+    ],
+    "businessStability": [
+      {
+        "signalId": "bs_bankruptcy",
+        "hasFinding": false,
+        "severity": "Informational",
+        "findingDetails": "No recent bankruptcy news detected.",
+        "source": "News/AI API"
+      },
+      {
+        "signalId": "bs_layoffs",
+        "hasFinding": false,
+        "severity": "Informational",
+        "findingDetails": "No recent mass layoff news detected.",
+        "source": "News/AI API"
+      }
+    ],
+    "reputation": [
+      {
+        "signalId": "rep_negative_news",
+        "hasFinding": true,
+        "severity": "High",
+        "findingDetails": "AI Summary: The provided article, \"Occupation BV: The Dutch Infrastructure Behind Israel’s War Economy,\" does not contain any information regarding Yandex.",
+        "source": "NewsAPI",
+        "evidencePayload": [
+          {
+            "title": "Occupation BV: The Dutch Infrastructure Behind Israel’s War Economy",
+            "description": "Freddie Ponton21st Century Wire In April 2025, a Dutch government official organised a networking event for Israeli investors in Tel Aviv. More than 50,000 Palestinians had been killed in Gaza. The International Criminal Court (ICC) had issued arrest warrants…",
+            "url": "https://www.activistpost.com/occupation-bv-the-dutch-infrastructure-behind-israels-war-economy/",
+            "source": "Activistpost.com"
+          }
+        ]
+      },
+      {
+        "signalId": "rep_breach_history",
+        "hasFinding": false,
+        "severity": "Informational",
+        "findingDetails": "API request limit exhausted or unavailable. Cannot verify this signal.",
+        "source": "External API"
+      }
+    ],
+    "legal": [
+      {
+        "signalId": "lr_fines",
+        "hasFinding": false,
+        "severity": "Informational",
+        "findingDetails": "API request limit exhausted or unavailable. Cannot verify this signal.",
+        "source": "OpenSanctions API"
+      }
+    ],
+    "maturity": [
+      {
+        "signalId": "bm_domain_age",
+        "hasFinding": false,
+        "severity": "Informational",
+        "findingDetails": "WHOIS data missing creation date. Cannot verify this signal.",
+        "source": "WHOIS"
+      },
+      {
+        "signalId": "bm_public_market",
+        "hasFinding": true,
+        "severity": "Low",
+        "findingDetails": "Company is not publicly traded (Private or Startup).",
+        "source": "Yahoo Finance API"
+      },
+      {
+        "signalId": "bm_wikipedia",
+        "hasFinding": false,
+        "severity": "Informational",
+        "findingDetails": "Global notability verified by AI: Yandex has a dedicated Wikipedia page and is a globally recognized Russian multinational technology company, often referred to as 'Russia's Google,' with a wide range of internet services.",
+        "source": "Gemini AI (Wikipedia)"
+      }
+    ]
+  },
+  "ftx.com": {
+    "cybersecurity": [
+      {
+        "signalId": "cs_ssl",
+        "hasFinding": false,
+        "severity": "Informational",
+        "findingDetails": "SSL Certificate is valid for 105 days.",
+        "source": "Native TLS Check"
+      },
+      {
+        "signalId": "cs_exposed_services",
+        "hasFinding": false,
+        "severity": "Informational",
+        "findingDetails": "API request limit exhausted or unavailable. Cannot verify this signal.",
+        "source": "Shodan API"
+      },
+      {
+        "signalId": "cs_security_txt",
+        "hasFinding": true,
+        "severity": "Low",
+        "findingDetails": "Missing security.txt file.",
+        "source": "HTTP GET /.well-known/security.txt"
+      }
+    ],
+    "compliance": [
+      {
+        "signalId": "cp_privacy_policy",
+        "hasFinding": true,
+        "severity": "Medium",
+        "findingDetails": "No Privacy Policy links detected in the rendered DOM.",
+        "source": "Puppeteer DOM Scraper"
+      }
+    ],
+    "businessStability": [
+      {
+        "signalId": "bs_bankruptcy",
+        "hasFinding": true,
+        "severity": "Critical",
+        "findingDetails": "News or AI detected potential bankruptcy (multiple signals found).",
+        "source": "News/AI API"
+      },
+      {
+        "signalId": "bs_layoffs",
+        "hasFinding": true,
+        "severity": "High",
+        "findingDetails": "News or AI detected mass layoffs (multiple signals found).",
+        "source": "News/AI API"
+      }
+    ],
+    "reputation": [
+      {
+        "signalId": "rep_negative_news",
+        "hasFinding": true,
+        "severity": "High",
+        "findingDetails": "AI Summary: FTX is distributing $900 million to creditors in its fifth payment round, totaling approximately $10 billion since its November 2022 bankruptcy filing. Separately, the US Senate unanimously adopted a resolution opposing clemency for former FTX CEO Sam Bankman-Fried.",
+        "source": "NewsAPI",
+        "evidencePayload": [
+          {
+            "title": "Fox News Struggles to Defend Trump Crypto ‘Grift,’ So He’ll Just Have to Do It Himself",
+            "description": "Trump reportedly made a whopping $1.4 billion from crypto in 2025.",
+            "url": "https://gizmodo.com/fox-news-struggles-to-defend-trump-crypto-grift-so-hell-just-have-to-do-it-himself-2000781751",
+            "source": "Gizmodo.com"
+          },
+          {
+            "title": "Actor Turned Anti-Crypto Activist Points To White House For Crypto Crimes",
+            "description": "Actor and director Ben McKenzie testified on Capitol Hill about the dangers of cryptocurrency. Known for playing heartthrob Ryan Atwood on the 2000s teen series \"The O.C.\", he is touring the United States and Europe to talk about his documentary on the crypto…",
+            "url": "https://crooksandliars.com/2026/07/actor-ben-mckenzie-talks-senate-about",
+            "source": "Crooksandliars.com"
+          },
+          {
+            "title": "Why do people hate the tech industry? (2023)",
+            "description": "I’ve been watching the shifting sentiments towards the tech industry for some while now, and it’s funny - they’ve shifted so much, and so quickly, that even people in the startup ends of the tech industry seem to have worked out that, you know, not everyone l…",
+            "url": "https://www.sevarg.net/2023/03/25/why-people-hate-tech/",
+            "source": "Sevarg.net"
+          },
+          {
+            "title": "FTX to distribute $900M to creditors in fifth payment round",
+            "description": "The FTX Recovery Trust and company have distributed about $10 billion since the exchange filed for bankruptcy in November 2022, leaving users cut off from their funds.",
+            "url": "https://cointelegraph.com/news/ftx-distribute-millions-creditors-fifth-payment-round",
+            "source": "Cointelegraph"
+          },
+          {
+            "title": "US Senate unanimously adopts resolution opposing clemency for SBF",
+            "description": "The US Senate backed a resolution opposing clemency for former FTX CEO Sam Bankman-Fried, while Polymarket traders put the odds of a Trump pardon by July 31 below 1%.",
+            "url": "https://cointelegraph.com/news/senate-adopts-resolution-opposing-clemency-sbf-ftx",
+            "source": "Cointelegraph"
+          }
+        ]
+      },
+      {
+        "signalId": "rep_breach_history",
+        "hasFinding": false,
+        "severity": "Informational",
+        "findingDetails": "API request limit exhausted or unavailable. Cannot verify this signal.",
+        "source": "External API"
+      }
+    ],
+    "legal": [
+      {
+        "signalId": "lr_fines",
+        "hasFinding": false,
+        "severity": "Informational",
+        "findingDetails": "API request limit exhausted or unavailable. Cannot verify this signal.",
+        "source": "OpenSanctions API"
+      }
+    ],
+    "maturity": [
+      {
+        "signalId": "bm_domain_age",
+        "hasFinding": false,
+        "severity": "Informational",
+        "findingDetails": "Domain is established (26.6 years old).",
+        "source": "WHOIS"
+      },
+      {
+        "signalId": "bm_public_market",
+        "hasFinding": false,
+        "severity": "Informational",
+        "findingDetails": "Publicly traded verified: Ticker FTXP (FOOTHILLS EXPLORATION INC).",
+        "source": "Yahoo Finance API"
+      },
+      {
+        "signalId": "bm_wikipedia",
+        "hasFinding": false,
+        "severity": "Informational",
+        "findingDetails": "Global notability verified: Wikipedia article found (\"FTX\").",
+        "source": "Wikipedia API"
+      }
+    ]
+  },
+  "very-new-startup-xyz123.io": {
+    "cybersecurity": [
+      {
+        "signalId": "cs_ssl",
+        "hasFinding": false,
+        "severity": "Informational",
+        "findingDetails": "Domain does not resolve to an IP (getaddrinfo ENOTFOUND very-new-startup-xyz123.io). Cannot verify SSL.",
+        "source": "Native TLS Check"
+      },
+      {
+        "signalId": "cs_exposed_services",
+        "hasFinding": false,
+        "severity": "Informational",
+        "findingDetails": "Domain does not resolve to an IP. Cannot run Shodan scan.",
+        "source": "Shodan API"
+      },
+      {
+        "signalId": "cs_security_txt",
+        "hasFinding": true,
+        "severity": "Low",
+        "findingDetails": "Missing security.txt file.",
+        "source": "HTTP GET /.well-known/security.txt"
+      }
+    ],
+    "compliance": [
+      {
+        "signalId": "cp_privacy_policy",
+        "hasFinding": true,
+        "severity": "Medium",
+        "findingDetails": "No Privacy Policy links detected in the rendered DOM.",
+        "source": "Puppeteer DOM Scraper"
+      }
+    ],
+    "businessStability": [
+      {
+        "signalId": "bs_bankruptcy",
+        "hasFinding": false,
+        "severity": "Informational",
+        "findingDetails": "No recent bankruptcy news detected.",
+        "source": "News/AI API"
+      },
+      {
+        "signalId": "bs_layoffs",
+        "hasFinding": false,
+        "severity": "Informational",
+        "findingDetails": "No recent mass layoff news detected.",
+        "source": "News/AI API"
+      }
+    ],
+    "reputation": [
+      {
+        "signalId": "rep_negative_news",
+        "hasFinding": false,
+        "severity": "Informational",
+        "findingDetails": "No adverse media found in recent news.",
+        "source": "NewsAPI"
+      },
+      {
+        "signalId": "rep_breach_history",
+        "hasFinding": false,
+        "severity": "Informational",
+        "findingDetails": "API request limit exhausted or unavailable. Cannot verify this signal.",
+        "source": "External API"
+      }
+    ],
+    "legal": [
+      {
+        "signalId": "lr_fines",
+        "hasFinding": false,
+        "severity": "Informational",
+        "findingDetails": "API request limit exhausted or unavailable. Cannot verify this signal.",
+        "source": "OpenSanctions API"
+      }
+    ],
+    "maturity": [
+      {
+        "signalId": "bm_domain_age",
+        "hasFinding": false,
+        "severity": "Informational",
+        "findingDetails": "WHOIS data missing creation date. Cannot verify this signal.",
+        "source": "WHOIS"
+      },
+      {
+        "signalId": "bm_public_market",
+        "hasFinding": true,
+        "severity": "Low",
+        "findingDetails": "Company is not publicly traded (Private or Startup).",
+        "source": "Yahoo Finance API"
+      },
+      {
+        "signalId": "bm_wikipedia",
+        "hasFinding": true,
+        "severity": "Low",
+        "findingDetails": "No dedicated corporate Wikipedia article found. Lacks global notability.",
+        "source": "Wikipedia API"
+      }
+    ]
+  }
+}

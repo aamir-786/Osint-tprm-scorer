@@ -39,15 +39,28 @@ async function scanLegal(domain) {
            signalId: 'lr_fines',
            hasFinding: false,
            severity: 'Informational',
-           findingDetails: 'OpenSanctions API rate limited or invalid key. Skipping scan.',
+           findingDetails: 'API request limit exhausted or unavailable. Cannot verify this signal.',
+           source: 'OpenSanctions API'
+         });
+      } else {
+         console.warn(`[Legal] OpenSanctions API scan failed for ${domain}:`, err.message);
+         findings.push({
+           signalId: 'lr_fines',
+           hasFinding: false,
+           severity: 'Informational',
+           findingDetails: 'API request failed or unavailable. Cannot verify this signal.',
            source: 'OpenSanctions API'
          });
       }
-      console.warn(`[Legal] OpenSanctions API scan failed for ${domain}:`, err.message);
     }
   } else {
-    // If no key, we assume no hit, or we can leave it empty
-    console.log(`[Legal] Skipping OpenSanctions scan for ${domain} (No API Key)`);
+    findings.push({
+      signalId: 'lr_fines',
+      hasFinding: false,
+      severity: 'Informational',
+      findingDetails: 'API request limit exhausted or unavailable (No Key). Cannot verify this signal.',
+      source: 'OpenSanctions API'
+    });
   }
 
   return findings;

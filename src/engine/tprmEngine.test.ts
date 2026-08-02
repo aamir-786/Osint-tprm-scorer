@@ -26,10 +26,10 @@ function runTests() {
 
   // Test 4: Undercovered category (<50%) -> Proportional Weight Redistribution
   const redistResult = calculateTPRMScore(PRESET_SCENARIOS[3].input);
-  const csResult = redistResult.categoryResults.cybersecurity;
+  const csResult = redistResult.categoryResults.security_privacy;
   console.assert(csResult.coverage < 0.5, `Test 4 Failed: Expected Cybersecurity coverage < 0.5`);
   console.assert(csResult.effectiveWeight < csResult.meta.weight, `Test 4 Failed: Expected reduced weight`);
-  console.assert(redistResult.categoryResults.compliance.effectiveWeight > CATEGORIES.compliance.weight, `Test 4 Failed: Expected compliance to gain weight`);
+  console.assert(redistResult.categoryResults.reliability_maturity.effectiveWeight > CATEGORIES.reliability_maturity.weight, `Test 4 Failed: Expected reliability_maturity to gain weight`);
   console.log('✓ Test 4 Passed: Proportional effective weight redistribution calculated accurately');
 
   // Test 5: Soft cap (Partial sanction match) -> C max
@@ -46,7 +46,7 @@ function runTests() {
   const multiAssetResult = calculateTPRMScore(PRESET_SCENARIOS[4].input);
   console.assert(multiAssetResult.multiAssetActive === true, `Test 6 Failed: Expected multiAssetActive to be true`);
   console.assert(multiAssetResult.weakestAssetInfo?.score === 840, `Test 6 Failed: Expected weakest asset score 840, got ${multiAssetResult.weakestAssetInfo?.score}`);
-  console.assert(multiAssetResult.categoryResults.cybersecurity.rawScore === 840, `Test 6 Failed: Expected Cybersecurity raw score 840, got ${multiAssetResult.categoryResults.cybersecurity.rawScore}`);
+  console.assert(multiAssetResult.categoryResults.security_privacy.rawScore === 840, `Test 6 Failed: Expected Cybersecurity raw score 840, got ${multiAssetResult.categoryResults.security_privacy.rawScore}`);
   console.log('✓ Test 6 Passed: Multi-asset vendor applies weakest domain Cybersecurity score (840/950)');
 
   // Test 7: Informational findings add 0 penalty
@@ -54,8 +54,8 @@ function runTests() {
     ...PRESET_SCENARIOS[0].input,
     signalStatuses: {
       ...PRESET_SCENARIOS[0].input.signalStatuses,
-      cp_iso_csa: {
-        signalId: 'cp_iso_csa',
+      bm_wikipedia: {
+        signalId: 'bm_wikipedia',
         checked: true,
         hasFinding: true,
         severity: 'Informational',
@@ -65,7 +65,7 @@ function runTests() {
     }
   };
   const infoResult = calculateTPRMScore(infoFindingInput);
-  console.assert(infoResult.categoryResults.compliance.rawScore === 950, `Test 7 Failed: Informational severity should not reduce raw score, got ${infoResult.categoryResults.compliance.rawScore}`);
+  console.assert(infoResult.categoryResults.reliability_maturity.rawScore === 950, `Test 7 Failed: Informational severity should not reduce raw score, got ${infoResult.categoryResults.reliability_maturity.rawScore}`);
   console.log('✓ Test 7 Passed: Informational severity logs finding with 0 penalty');
 
   console.log('--- ALL ENGINE TESTS PASSED SUCCESSFULLY ---');

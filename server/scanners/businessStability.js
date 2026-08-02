@@ -1,82 +1,132 @@
 const axios = require('axios');
 
+async function fetchUrl(url, timeoutMs = 8000, options = {}) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(id);
+    return response;
+  } catch (error) {
+    clearTimeout(id);
+    throw error;
+  }
+}
+
 async function scanBusinessStability(domain) {
   const findings = [];
   const newsApiKey = process.env.NEWS_API_KEY;
   const mediaStackApiKey = process.env.MEDIASTACK_API_KEY;
+  const geminiApiKey = process.env.GEMINI_API_KEY;
   const companyName = domain.split('.')[0];
+  
+  let bankResults = -1; // -1 means failed to fetch
+  let layoffResults = -1;
 
-  if (newsApiKey || mediaStackApiKey) {
+  try {
+    // 1. Try fetching from News APIs
+    if (newsApiKey) {
+      const bankRes = await fetchUrl(`https://newsapi.org/v2/everything?q="${companyName}" AND bankruptcy&apiKey=${newsApiKey}`);
+      const bankData = await bankRes.json();
+      if (bankData.status === 'ok') bankResults = bankData.totalResults;
+      
+      const layoffRes = await fetchUrl(`https://newsapi.org/v2/everything?q="${companyName}" AND layoffs&apiKey=${newsApiKey}`);
+      const layoffData = await layoffRes.json();
+      if (layoffData.status === 'ok') layoffResults = layoffData.totalResults;
+    } else if (mediaStackApiKey) {
+      const bankRes = await fetchUrl(`http://api.mediastack.com/v1/news?access_key=${mediaStackApiKey}&keywords=${companyName} bankruptcy`);
+      const bankData = await bankRes.json();
+      if (bankData.pagination) bankResults = bankData.pagination.total;
+
+      const layoffRes = await fetchUrl(`http://api.mediastack.com/v1/news?access_key=${mediaStackApiKey}&keywords=${companyName} layoffs`);
+      const layoffData = await layoffRes.json();
+      if (layoffData.pagination) layoffResults = layoffData.pagination.total;
+    }
+  } catch (e) {
+    console.warn(`[Stability] News API fetch failed:`, e.message);
+  }
+
+  // 2. Use Gemini AI as fallback / secondary verification
+  if (bankResults === -1 && geminiApiKey) {
     try {
-      // 1. Check for Bankruptcy
-      let bankResults = 0;
-      if (newsApiKey) {
-        const bankRes = await axios.get(`https://newsapi.org/v2/everything?q="${companyName}" AND bankruptcy&apiKey=${newsApiKey}`);
-        bankResults = bankRes.data.totalResults;
-      } else if (mediaStackApiKey) {
-        const bankRes = await axios.get(`http://api.mediastack.com/v1/news?access_key=${mediaStackApiKey}&keywords=${companyName} bankruptcy`);
-        bankResults = bankRes.data.pagination ? bankRes.data.pagination.total : 0;
-      }
-
-      if (bankResults > 0) {
-        findings.push({
-          signalId: 'bs_bankruptcy',
-          hasFinding: true,
-          severity: 'Critical',
-          findingDetails: `News found regarding potential bankruptcy (${bankResults} articles).`,
-          source: newsApiKey ? 'NewsAPI' : 'MediaStack API'
-        });
-      } else {
-        findings.push({
-          signalId: 'bs_bankruptcy',
-          hasFinding: false,
-          severity: 'Informational',
-          findingDetails: 'No recent bankruptcy news detected.',
-          source: newsApiKey ? 'NewsAPI' : 'MediaStack API'
-        });
-      }
-
-      // 2. Check for Mass Layoffs
-      let layoffResults = 0;
-      if (newsApiKey) {
-        const layoffRes = await axios.get(`https://newsapi.org/v2/everything?q="${companyName}" AND layoffs&apiKey=${newsApiKey}`);
-        layoffResults = layoffRes.data.totalResults;
-      } else if (mediaStackApiKey) {
-        const layoffRes = await axios.get(`http://api.mediastack.com/v1/news?access_key=${mediaStackApiKey}&keywords=${companyName} layoffs`);
-        layoffResults = layoffRes.data.pagination ? layoffRes.data.pagination.total : 0;
-      }
-
-      if (layoffResults > 0) {
-        findings.push({
-          signalId: 'bs_layoffs',
-          hasFinding: true,
-          severity: 'High',
-          findingDetails: `News found regarding mass layoffs (${layoffResults} articles).`,
-          source: newsApiKey ? 'NewsAPI' : 'MediaStack API'
-        });
-      } else {
-        findings.push({
-          signalId: 'bs_layoffs',
-          hasFinding: false,
-          severity: 'Informational',
-          findingDetails: 'No recent mass layoff news detected.',
-          source: newsApiKey ? 'NewsAPI' : 'MediaStack API'
-        });
+      const prompt = `You are a Third-Party Risk Management (TPRM) analyst. Perform a targeted web search to determine if the company at domain "${domain}" has any recent news of bankruptcy or mass layoffs. Reply ONLY in valid JSON format: { "bankruptcyDetected": boolean, "layoffsDetected": boolean, "details": "1-sentence summary" }`;
+      
+      const res = await fetchUrl(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`, 15000, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { responseMimeType: "application/json" }
+        })
+      });
+      
+      if (res.status === 200) {
+        const data = await res.json();
+        const text = data.candidates[0].content.parts[0].text;
+        const resultJson = JSON.parse(text);
+        
+        bankResults = resultJson.bankruptcyDetected ? 5 : 0;
+        layoffResults = resultJson.layoffsDetected ? 5 : 0;
       }
     } catch (err) {
-      if (err.response && [401, 403, 429].includes(err.response.status)) {
-         findings.push({
-           signalId: 'bs_bankruptcy',
-           hasFinding: false,
-           severity: 'Informational',
-           findingDetails: 'News API rate limited or invalid key. Skipping scan.',
-           source: 'News API'
-         });
-      }
-      console.warn(`[Stability] News API scan failed for ${domain}:`, err.message);
+      console.warn(`[Stability] Gemini AI fetch failed:`, err.message);
     }
+  }
+
+  // Process Bankruptcy
+  if (bankResults > 0) {
+    findings.push({
+      signalId: 'bs_bankruptcy',
+      hasFinding: true,
+      severity: 'Critical',
+      findingDetails: `News or AI detected potential bankruptcy (multiple signals found).`,
+      source: 'News/AI API'
+    });
+  } else if (bankResults === 0) {
+    findings.push({
+      signalId: 'bs_bankruptcy',
+      hasFinding: false,
+      severity: 'Informational',
+      findingDetails: 'No recent bankruptcy news detected.',
+      source: 'News/AI API'
+    });
   } else {
-    console.log(`[Stability] Skipping News scan for ${domain} (No NewsAPI or MediaStack Key)`);
+    // User requested penalty if we fail to fetch properly
+    findings.push({
+      signalId: 'bs_bankruptcy',
+      hasFinding: true,
+      severity: 'Medium',
+      findingDetails: 'Unable to properly fetch financial stability data (Bankruptcy). Applying penalty for lack of transparency.',
+      source: 'News/AI API (Failed)'
+    });
+  }
+
+  // Process Layoffs
+  if (layoffResults > 0) {
+    findings.push({
+      signalId: 'bs_layoffs',
+      hasFinding: true,
+      severity: 'High',
+      findingDetails: `News or AI detected mass layoffs (multiple signals found).`,
+      source: 'News/AI API'
+    });
+  } else if (layoffResults === 0) {
+    findings.push({
+      signalId: 'bs_layoffs',
+      hasFinding: false,
+      severity: 'Informational',
+      findingDetails: 'No recent mass layoff news detected.',
+      source: 'News/AI API'
+    });
+  } else {
+    // User requested penalty if we fail to fetch properly
+    findings.push({
+      signalId: 'bs_layoffs',
+      hasFinding: true,
+      severity: 'Medium',
+      findingDetails: 'Unable to properly fetch financial stability data (Layoffs). Applying penalty for lack of transparency.',
+      source: 'News/AI API (Failed)'
+    });
   }
 
   return findings;

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { AssessmentInput, CategoryKey, Severity, SignalStatus, FindingRecord } from '../types/tprm';
 import { CATEGORIES } from '../engine/constants';
-import { Shield, Lock, FileCheck, TrendingUp, AlertTriangle, Scale, Plus, Server, CheckSquare, Square, Search, HelpCircle, Trash2, Clock } from 'lucide-react';
+import { Shield, FileCheck, TrendingUp, AlertTriangle, Scale, Plus, Server, CheckSquare, Square, Search, HelpCircle, Trash2 } from 'lucide-react';
 
 interface Props {
   input: AssessmentInput;
@@ -9,60 +9,48 @@ interface Props {
 }
 
 const CATEGORY_ICONS: Record<CategoryKey, any> = {
-  cybersecurity: Shield,
-  compliance: Lock,
-  stability: TrendingUp,
-  reputation: AlertTriangle,
-  resilience: FileCheck,
-  legal: Scale,
-  maturity: Clock,
+  security_privacy: Shield,
+  reliability_maturity: FileCheck,
+  financial_health: TrendingUp,
+  reputation_ethics: AlertTriangle,
+  legal_geopolitical: Scale,
 };
 
 const SEVERITY_GUIDANCE: Record<CategoryKey, string[]> = {
-  maturity: [
+  reliability_maturity: [
     'Informational: Domain age > 5 years. Proven track record.',
     'Low (-10): Domain age 2-5 years. Relatively young.',
     'Medium (-30): Domain age 6 months - 2 years. Recent startup territory.',
     'High (-70): Domain age < 6 months. Brand new entity. Unproven.'
   ],
-  cybersecurity: [
+  security_privacy: [
     'Critical (-150): SSL grade D/F or exposed critical service/database (Elastic, RDP, SSH, DB port)',
     'High (-70): Expired SSL certificate or exposed non-critical service',
-    'Medium (-30): SSL grade C or missing DMARC/DNS security headers',
+    'Medium (-30): SSL grade C or missing DMARC/DNS security headers or missing privacy policy',
     'Low (-10): Missing security header (HSTS, CSP, X-Frame) or no security.txt file',
   ],
-  compliance: [
-    'Medium (-30): No privacy policy at all or no ISO 27001 / CSA STAR listing',
-    'Low (-10): No Data Processing Addendum (DPA) available',
-    'Informational (0): SOC 2 claims on vendor own site (unverified, log only)',
-  ],
-  stability: [
+  financial_health: [
     'Critical (-150): Active bankruptcy or insolvency filings',
     'High (-70): Reported mass layoffs or funding collapse news',
     'Medium (-30): Declining headcount trend',
     'Low (-10): Very new company with minimal digital track record footprint',
   ],
-  reputation: [
+  reputation_ethics: [
     'Critical (-150): Confirmed data breach disclosed in credible news sources',
     'High (-70): Sustained negative coverage (multiple reports over 6+ months)',
-    'Medium (-30): Isolated negative mention',
+    'Medium (-30): Isolated negative mention or no ESG reports',
     'Low (-10): Minor or dated negative media mention',
   ],
-  resilience: [
-    'High (-70): Frequent or serious major outages/incidents in available history',
-    'Medium (-30): No public status page found at all',
-    'Low (-10): One-off minor service incident',
-  ],
-  legal: [
+  legal_geopolitical: [
     'Critical (-150): Direct sanctions/watchlist match (also triggers Grade F Override)',
-    'High (-70): Active regulatory investigation or export restriction flag (BIS Entity List)',
+    'High (-70): Active regulatory investigation or hosted in high-risk jurisdiction',
     'Medium (-30): Historical resolved regulatory action or fine',
-    'Low (-10): Related-entity or partial name match on sanctions list (also triggers Grade C Soft Cap)',
+    'Low (-10): Related-entity or partial name match on sanctions list',
   ],
 };
 
 export const CategorySignalMatrix: React.FC<Props> = ({ input, onChange }) => {
-  const [activeCategory, setActiveCategory] = useState<CategoryKey>('cybersecurity');
+  const [activeCategory, setActiveCategory] = useState<CategoryKey>('security_privacy');
   const [searchQuery, setSearchQuery] = useState('');
   const [showSeverityHelp, setShowSeverityHelp] = useState(false);
   const [showAddCustom, setShowAddCustom] = useState(false);
@@ -91,7 +79,7 @@ export const CategorySignalMatrix: React.FC<Props> = ({ input, onChange }) => {
           cybersecurityPenalties: [
             {
               id: 'f_api_header',
-              category: 'cybersecurity' as CategoryKey,
+              category: 'security_privacy' as CategoryKey,
               signalId: 'cs_headers',
               title: 'Missing HSTS header on API endpoint',
               severity: 'Medium' as Severity,
@@ -100,7 +88,7 @@ export const CategorySignalMatrix: React.FC<Props> = ({ input, onChange }) => {
             },
             {
               id: 'f_api_sectxt',
-              category: 'cybersecurity' as CategoryKey,
+              category: 'security_privacy' as CategoryKey,
               signalId: 'cs_security_txt',
               title: 'Missing security.txt',
               severity: 'Low' as Severity,
@@ -302,7 +290,7 @@ export const CategorySignalMatrix: React.FC<Props> = ({ input, onChange }) => {
       )}
 
       {/* Multi-Asset Control Panel for Cybersecurity */}
-      {activeCategory === 'cybersecurity' && (
+      {activeCategory === 'security_privacy' && (
         <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: '14px 16px', borderRadius: '12px', marginBottom: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#334155', fontWeight: 600, fontSize: '0.9rem' }}>

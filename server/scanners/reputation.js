@@ -34,21 +34,30 @@ async function scanReputation(domain) {
         let findingDetails = `Adverse media detected: ${totalResults} articles mentioning scandal, fraud, or lawsuits.`;
 
         // Gemini AI Summarization
+        let isNegative = true; // Default to true if no AI to be safe, or just use AI if present
+        
         if (geminiApiKey) {
           try {
-            const prompt = `You are a Third-Party Risk Management (TPRM) analyst. Write a highly concise, professional 1-2 sentence executive summary of the following adverse news articles about ${companyName}. Only state facts based on the articles. Articles: ${JSON.stringify(evidencePayload)}`;
+            const prompt = `You are a Third-Party Risk Management (TPRM) analyst. Analyze these news articles about ${companyName}.
+            Determine if they actually mention the company in a negative light (scandals, lawsuits, breaches). 
+            If the articles are NOT about this company or are completely neutral, mark isNegative as false.
+            Respond strictly in valid JSON format: { "isNegative": boolean, "summary": "1-2 sentence executive summary." }
+            Articles: ${JSON.stringify(evidencePayload)}`;
             
             const geminiRes = await axios.post(
               `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`,
               {
-                contents: [{ parts: [{ text: prompt }] }]
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { responseMimeType: "application/json" }
               },
               { headers: { 'Content-Type': 'application/json' } }
             );
 
-            const summary = geminiRes.data.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (summary) {
-              findingDetails = `AI Summary: ${summary.trim()}`;
+            const responseText = geminiRes.data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (responseText) {
+              const aiData = JSON.parse(responseText);
+              isNegative = aiData.isNegative;
+              findingDetails = `AI Summary: ${aiData.summary.trim()}`;
             }
           } catch (aiErr) {
             console.error(`Gemini API error for ${domain}:`, aiErr.message);
@@ -58,14 +67,25 @@ async function scanReputation(domain) {
           findingDetails += ` Top headline: ${evidencePayload[0].title}`;
         }
 
-        findings.push({
-          signalId: 'rep_negative_news',
-          hasFinding: true,
-          severity: 'High',
-          findingDetails,
-          source: newsApiKey ? 'NewsAPI' : 'MediaStack API',
-          evidencePayload
-        });
+        if (isNegative) {
+          findings.push({
+            signalId: 'rep_negative_news',
+            hasFinding: true,
+            severity: 'High',
+            findingDetails,
+            source: newsApiKey ? 'NewsAPI' : 'MediaStack API',
+            evidencePayload
+          });
+        } else {
+          findings.push({
+            signalId: 'rep_negative_news',
+            hasFinding: false,
+            severity: 'Informational',
+            findingDetails: `News articles found, but AI determined they are not adverse or not relevant. ${findingDetails}`,
+            source: newsApiKey ? 'NewsAPI' : 'MediaStack API',
+            evidencePayload
+          });
+        }
       } else {
         findings.push({
           signalId: 'rep_negative_news',
@@ -81,14 +101,28 @@ async function scanReputation(domain) {
            signalId: 'rep_negative_news',
            hasFinding: false,
            severity: 'Informational',
-           findingDetails: 'News API rate limited or invalid key. Skipping scan.',
+           findingDetails: 'API request limit exhausted or unavailable. Cannot verify this signal.',
+           source: 'News API'
+         });
+      } else {
+         console.warn(`[Reputation] Negative News API scan failed for ${domain}:`, err.message);
+         findings.push({
+           signalId: 'rep_negative_news',
+           hasFinding: false,
+           severity: 'Informational',
+           findingDetails: 'API request failed or unavailable. Cannot verify this signal.',
            source: 'News API'
          });
       }
-      console.warn(`[Reputation] Negative News API scan failed for ${domain}:`, err.message);
     }
   } else {
-    console.log(`[Reputation] Skipping News scan for ${domain} (No NewsAPI or MediaStack Key)`);
+    findings.push({
+      signalId: 'rep_negative_news',
+      hasFinding: false,
+      severity: 'Informational',
+      findingDetails: 'API request limit exhausted or unavailable (No Key). Cannot verify this signal.',
+      source: 'News API'
+    });
   }
 
   // 2. Data Breach baseline
@@ -96,8 +130,8 @@ async function scanReputation(domain) {
     signalId: 'rep_breach_history',
     hasFinding: false,
     severity: 'Informational',
-    findingDetails: 'Data breach verification requires an external API integration. Assuming no known breaches.',
-    source: 'Heuristic Baseline'
+    findingDetails: 'API request limit exhausted or unavailable. Cannot verify this signal.',
+    source: 'External API'
   });
 
   return findings;
