@@ -12,19 +12,27 @@ async function generateAIScore(domain) {
 
   const prompt = `You are an expert Third-Party Risk Management (TPRM) Analyst. 
 I need you to independently evaluate the company operating at the domain "${domain}".
-Use your internal knowledge to assess them across these 7 categories:
-1. Cybersecurity
-2. Compliance & Privacy
-3. Business Stability
-4. Reputation
-5. Operational Resilience
-6. Legal & Regulatory
-7. Business Maturity
+Use your internal knowledge to assess them across these 5 categories:
+1. Security & Privacy (30%)
+   Focus: "Is my data safe?"
+   Evaluate: SSL Grade & Cert, Certificate Validity, Security Headers, Known Vulnerabilities (CVEs), Exposed Services, security.txt Presence, Privacy Policy Presence.
+2. Reliability & Maturity (25%)
+   Focus: "Are they established and reliable?"
+   Evaluate: Domain Registration Age, Public Market Verification, Global Notability, Public Status Page Presence, Cloud & DNS Hosting, Corporate Email Provider.
+3. Financial Health (15%)
+   Focus: "Are they going bankrupt?"
+   Evaluate: Insolvency & Bankruptcy, Layoffs & Funding News. (If info is lacking, apply penalty for lack of transparency).
+4. Reputation & Ethics (15%)
+   Focus: "Are they involved in scandals?"
+   Evaluate: Negative Media Screening, Breach Disclosure, ESG/Sustainability Reporting, Modern Slavery Statement.
+5. Legal & Geopolitical (15%)
+   Focus: "Is it legal and safe to do business with them?"
+   Evaluate: Sanctions & Watchlist Check, Hosting Jurisdiction.
 
 SCORING METHODOLOGY:
 - The company starts with a perfect score of 950.
-- For each category, recall any known facts, breaches, certifications, or sanctions.
-- If you find negative information, apply a penalty based on severity:
+- For each category, recall any known facts and evaluate based on the criteria.
+- If you find negative information or lack of transparency, apply a penalty based on severity:
   - Critical (-150): e.g., active sanctions, massive data breach, bankruptcy.
   - High (-70): e.g., multiple negative news, major outages, expired certs.
   - Medium (-30): e.g., isolated complaints, minor security flaws.
@@ -46,13 +54,13 @@ You MUST output ONLY a valid JSON object matching this exact schema, with no mar
   "summary": "1-2 sentence executive summary of your evaluation.",
   "categories": [
     {
-      "name": "Cybersecurity",
+      "name": "Security & Privacy",
       "findings": "Your analysis for this category...",
       "penaltyApplied": 0
     }
   ]
 }
-Make sure there are exactly 7 objects in the categories array.`;
+Make sure there are exactly 5 objects in the categories array.`;
 
   try {
     const geminiRes = await axios.post(
