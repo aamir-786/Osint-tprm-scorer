@@ -12,30 +12,33 @@ Our OSINT TPRM Scorer provides an **instant, zero-friction, objective security &
 
 ---
 
-## Part 1: The User Perspective & Human Mental Model
+## Part 1: What It Has Done (Completed Capabilities & Proven Milestones)
 
-### How Non-Technical Executives & Risk Officers Think
-When a procurement manager, Chief Risk Officer (CRO), or Security Director decides whether to onboard a new software vendor (e.g., Salesforce, Zoom, or a niche startup), they do **not** initially think in terms of raw CVE numbers, SSL cipher suites, or WHOIS record formatting. 
+The Proof-of-Concept (PoC) has achieved the following core engineering and architectural milestones:
 
-Instead, their mental model revolves around **5 intuitive human questions**:
+1. **Restructured Architecture Around 5 User-Centric Categories:**
+   - Evolved from 7 technical categories into 5 human-intuitive categories: **Security & Privacy (30%)**, **Reliability & Maturity (25%)**, **Financial Health (15%)**, **Reputation & Ethics (15%)**, and **Legal & Geopolitical (15%)**.
 
-```
-+-----------------------------------------------------------------------------------+
-|                            THE USER MENTAL MODEL                                 |
-+-----------------------------------------------------------------------------------+
-| 1. "Is my data safe with them?"                 --> Security & Privacy (30%)       |
-| 2. "Are they established and reliable?"          --> Reliability & Maturity (25%)   |
-| 3. "Are they going bankrupt or collapsing?"     --> Financial Health (15%)         |
-| 4. "Are they involved in scandals/breaches?"    --> Reputation & Ethics (15%)      |
-| 5. "Is it legal & compliant to pay them?"       --> Legal & Geopolitical (15%)     |
-+-----------------------------------------------------------------------------------+
-```
+2. **Built Multi-Scanner Concurrent Intelligence Engine:**
+   - Implemented 10 active concurrent scanners in Node.js: **Shodan API**, **OpenSanctions API**, **NewsAPI**, **MediaStack API**, **Puppeteer Headless Web Scraper**, **WHOIS Registry Protocol**, **Native Node TLS/SSL Prober**, **Google DoH / IP-API**, **Yahoo Finance API**, and **Wikipedia API**.
+
+3. **Integrated Google Gemini 2.5 Flash AI:**
+   - Engineered strict JSON Schema prompt enforcement with Gemini 2.5 Flash to synthesize unstructured qualitative news, financial distress signals, corporate notability, and ESG declarations.
+
+4. **Engineered Defensible 0–950 Mathematical Credit Engine:**
+   - Built a deterministic FICO-style scoring model (`Base Score = 950`) with standardized severity penalties (`Critical: -150`, `High: -70`, `Medium: -30`, `Low: -10`) and **Hard Overrides** for sanctions or ransomware.
+
+5. **Developed Interactive Executive Dashboard:**
+   - Built a sleek, responsive React + Vite frontend with real-time score gauges, letter grade badges, category filters, and line-item evidence audit trails.
+
+6. **Validated Against Real-World Stress Tests:**
+   - Executed automated batch runs across 18 real-world domains (including Apple, Google, Yandex, FTX, Kaspersky, and non-existent test domains), proving accurate scoring, sanction overrides, and fallback handling for missing data.
 
 ---
 
-### Step-by-Step User Journey
+## Part 2: How It Is Doing It (Architecture, Execution Pipeline & Implementation)
 
-Here is how a risk analyst or business leader uses the tool in practice:
+The system executes end-to-end in 6 distinct data pipeline layers:
 
 ```mermaid
 sequenceDiagram
@@ -59,6 +62,72 @@ sequenceDiagram
     UI-->>User: Renders Executive Dashboard with Grade (A-F) & Line-Item Audit Trail
 ```
 
+### The 6 Execution Layers
+
+1. **Layer 1: Input & Entity Resolution**
+   - User inputs a domain (`vendor.com`). The backend resolves canonical legal entity name, primary IP addresses, and base domain topology.
+
+2. **Layer 2: Parallel Non-Blocking Scraping**
+   - Node.js `Promise.all()` triggers 10 OSINT scanners asynchronously without blocking the event loop.
+
+3. **Layer 3: Signal Normalization & Severity Classification**
+   - Each scanner normalizes raw API JSON into a standard `SignalStatus` object containing `signalId`, `hasFinding`, `severity` (Critical, High, Medium, Low, Informational), `source`, and `findingDetails`.
+
+4. **Layer 4: AI Contextual Synthesis**
+   - Unstructured text (news articles, privacy policies) is sent to Gemini 2.5 Flash with a constrained prompt that forces JSON output categorized into the 5 risk buckets.
+
+5. **Layer 5: Mathematical Deduction & Hard Override Engine**
+   - Computes $950 - \sum \text{Penalties}$. If a sanction match or ransomware finding is detected, it overrides the score directly to **Grade F (0 points)**.
+
+6. **Layer 6: Interactive UI & Audit Trail Rendering**
+   - React UI receives the consolidated JSON and renders the score gauge, grade badge, category tabs, and verifiable line-item audit trail.
+
+---
+
+## Part 3: What It Will Do (Future Roadmap & Strategic Expansion)
+
+While the PoC fully validates point-in-time scanning, the future production roadmap focuses on 5 high-impact enterprise expansion capabilities:
+
+1. **Continuous Automated Scanning & Slack/Email Alerts:**
+   - Shift from manual point-in-time searches to automated daily/weekly background monitoring. If a vendor's score drops or a new sanction is listed, instant alerts are dispatched to risk teams.
+
+2. **Nth-Party Supply Chain & Cloud Dependency Mapping:**
+   - Expand supply chain tracking by analyzing vendor sub-processors (e.g., AWS, Cloudflare, Stripe) to calculate concentration risk and detect cascading outages.
+
+3. **Deep Quantitative Financial & Dark Web Credentials Integration:**
+   - Integrate financial APIs (Dun & Bradstreet, Alpha Vantage) for quantitative Altman Z-Score bankruptcy prediction, and HaveIBeenPwned API for dark web email credential dump exposures.
+
+4. **Historical Risk Trend Graphs & Time-Series Telemetry:**
+   - Store historical scan snapshots in a time-series database (PostgreSQL / TimescaleDB) to display 30/60/90-day risk posture degradation or improvement graphs.
+
+5. **Vendor Remediation Self-Service Portal:**
+   - Enable vendors to log into a self-service portal, view their score breakdown, submit remediation proof (e.g., renewed TLS cert or updated privacy policy), and trigger an automated re-scan to restore their score.
+
+---
+
+## Part 4: The User Perspective & Human Mental Model
+
+### How Non-Technical Executives & Risk Officers Think
+When a procurement manager, Chief Risk Officer (CRO), or Security Director decides whether to onboard a new software vendor (e.g., Salesforce, Zoom, or a niche startup), they do **not** initially think in terms of raw CVE numbers, SSL cipher suites, or WHOIS record formatting. 
+
+Instead, their mental model revolves around **5 intuitive human questions**:
+
+```
++-----------------------------------------------------------------------------------+
+|                            THE USER MENTAL MODEL                                 |
++-----------------------------------------------------------------------------------+
+| 1. "Is my data safe with them?"                 --> Security & Privacy (30%)       |
+| 2. "Are they established and reliable?"          --> Reliability & Maturity (25%)   |
+| 3. "Are they going bankrupt or collapsing?"     --> Financial Health (15%)         |
+| 4. "Are they involved in scandals/breaches?"    --> Reputation & Ethics (15%)      |
+| 5. "Is it legal & compliant to pay them?"       --> Legal & Geopolitical (15%)     |
++-----------------------------------------------------------------------------------+
+```
+
+---
+
+### Step-by-Step User Journey
+
 #### 1. Input (Zero Setup)
 The user enters the vendor's domain (`vendor.com`). No vendor authorization or questionnaire installation is required.
 
@@ -77,7 +146,7 @@ The user can expand any of the 5 category tabs to see the exact evidence behind 
 
 ---
 
-## Part 2: Detailed Breakdown of the 5 User-Centric Categories
+## Part 5: Detailed Breakdown of the 5 User-Centric Categories
 
 Below is the exact alignment between **user intent**, **business focus**, **OSINT telemetry signals**, and **mathematical weights**:
 
@@ -135,7 +204,7 @@ Below is the exact alignment between **user intent**, **business focus**, **OSIN
 
 ---
 
-## Part 3: Defensible IP & Mathematical Methodology
+## Part 6: Defensible IP & Mathematical Methodology
 
 When presenting to supervisors or defending the model against client inquiries, you must clearly explain **how the scoring engine works** and **why it is mathematically defensible**.
 
@@ -196,7 +265,7 @@ Our system uses a hybrid approach to combine mathematical precision with natural
 
 ---
 
-## Part 4: The Client Defense Playbook
+## Part 7: The Client Defense Playbook
 
 ### "Why did Vendor X receive Score Y?"
 
@@ -236,7 +305,7 @@ When a client, vendor, or supervisor questions a score, use this **4-Step Client
 
 ---
 
-## Part 5: Summary Table for Presentation Slides
+## Part 8: Summary Table for Presentation Slides
 
 Use this quick summary table when presenting to your supervisor or in project pitch slides:
 
@@ -251,6 +320,6 @@ Use this quick summary table when presenting to your supervisor or in project pi
 
 ---
 
-**Document Version:** 2.0  
+**Document Version:** 3.0  
 **Status:** Approved for Executive & Supervisor Presentation  
 **Target Architecture:** Node.js Express OSINT Backend + React Frontend + Gemini 2.5 Flash AI Engine
