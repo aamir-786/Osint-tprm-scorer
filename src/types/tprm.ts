@@ -74,12 +74,20 @@ export interface CategoryResult {
   confidence: Confidence;
 }
 
+export interface ProductEntityRelationship {
+  parentName: string;
+  parentDomain: string;
+  productName: string;
+  explanation: string;
+}
+
 export interface VendorIdentity {
   companyName: string;
   confirmedDomain: string;
   resolutionConfidence: Confidence;
   resolutionReason?: string;
   candidateDomains?: string[];
+  productBelongsTo?: ProductEntityRelationship;
 }
 
 export interface AssessmentInput {

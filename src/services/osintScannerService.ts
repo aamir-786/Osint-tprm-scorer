@@ -9,6 +9,33 @@ export interface ScanProgressStep {
   detail?: string;
 }
 
+export const PRODUCT_ENTITY_MAP: Record<string, { parentName: string; parentDomain: string; productName: string; explanation: string }> = {
+  'wahidai.com': {
+    parentName: 'Effective Risk Management Inc.',
+    parentDomain: 'effectiverm.com',
+    productName: 'Wahid AI TPRM Governance Platform',
+    explanation: 'Wahid AI is an enterprise AI risk assessment & governance product developed, operated, and maintained by Effective Risk Management Inc.'
+  },
+  'github.com': {
+    parentName: 'Microsoft Corporation',
+    parentDomain: 'microsoft.com',
+    productName: 'GitHub Code Repository Platform',
+    explanation: 'GitHub is a cloud code hosting and developer collaboration platform owned and operated as a subsidiary of Microsoft Corporation.'
+  },
+  'slack.com': {
+    parentName: 'Salesforce, Inc.',
+    parentDomain: 'salesforce.com',
+    productName: 'Slack Enterprise Messaging Platform',
+    explanation: 'Slack is a cloud-based team collaboration platform owned and operated as a business unit of Salesforce, Inc.'
+  },
+  'chatgpt.com': {
+    parentName: 'OpenAI OpCo LLC',
+    parentDomain: 'openai.com',
+    productName: 'ChatGPT Generative AI System',
+    explanation: 'ChatGPT is a generative artificial intelligence product developed and deployed by OpenAI OpCo LLC.'
+  }
+};
+
 export function extractDomainFromInput(rawInput: string): { domain: string; companyName: string } {
   let clean = rawInput.trim().toLowerCase();
   
@@ -23,11 +50,14 @@ export function extractDomainFromInput(rawInput: string): { domain: string; comp
 
   // Known entity mapping for precise legal names
   const knownEntities: Record<string, string> = {
+    'effectiverm.com': 'Effective Risk Management Inc.',
+    'wahidai.com': 'Wahid AI (Product of Effective Risk Management)',
     'openai.com': 'OpenAI OpCo LLC',
+    'chatgpt.com': 'ChatGPT (Product of OpenAI)',
     'google.com': 'Google LLC',
     'stripe.com': 'Stripe, Inc.',
-    'github.com': 'GitHub, Inc.',
-    'slack.com': 'Slack Technologies LLC',
+    'github.com': 'GitHub, Inc. (Product of Microsoft)',
+    'slack.com': 'Slack Technologies LLC (Product of Salesforce)',
     'apple.com': 'Apple Inc.',
     'microsoft.com': 'Microsoft Corporation'
   };
@@ -41,8 +71,14 @@ export function extractDomainFromInput(rawInput: string): { domain: string; comp
     const companyName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
     return { domain, companyName };
   } else {
-    // Looks like a company name
-    const domain = clean.toLowerCase() + '.com';
+    // Keyword or company name search handling
+    let domain = clean.toLowerCase() + '.com';
+    if (clean.toLowerCase() === 'wahid' || clean.toLowerCase() === 'wahidai') {
+      domain = 'wahidai.com';
+    } else if (clean.toLowerCase() === 'effectiverm' || clean.toLowerCase() === 'effective risk management') {
+      domain = 'effectiverm.com';
+    }
+
     if (knownEntities[domain]) {
       return { domain, companyName: knownEntities[domain] };
     }
@@ -66,8 +102,36 @@ const DOMAIN_TELEMETRY_DB: Record<string, {
   statusPagePresent: boolean;
   isoCertified: boolean;
 }> = {
+  'wahidai.com': {
+    companyName: 'Wahid AI (Product of Effective Risk Management)',
+    resolutionConfidence: 'High',
+    resolutionReason: 'Resolved product wahidai.com to parent enterprise Effective Risk Management (effectiverm.com)',
+    sslGrade: 'A',
+    hasExposedService: false,
+    hasBreachHistory: false,
+    hasSanctionHit: false,
+    hasPartialSanction: false,
+    privacyPolicyMissing: false,
+    dpaMissing: false,
+    statusPagePresent: false,
+    isoCertified: false,
+  },
+  'effectiverm.com': {
+    companyName: 'Effective Risk Management Inc.',
+    resolutionConfidence: 'High',
+    resolutionReason: 'Verified Parent Enterprise Company',
+    sslGrade: 'A',
+    hasExposedService: false,
+    hasBreachHistory: false,
+    hasSanctionHit: false,
+    hasPartialSanction: false,
+    privacyPolicyMissing: false,
+    dpaMissing: false,
+    statusPagePresent: true,
+    isoCertified: true,
+  },
   'github.com': {
-    companyName: 'GitHub, Inc. (Microsoft)',
+    companyName: 'GitHub, Inc. (Product of Microsoft)',
     resolutionConfidence: 'High',
     sslGrade: 'A+',
     hasExposedService: false,
@@ -93,7 +157,7 @@ const DOMAIN_TELEMETRY_DB: Record<string, {
     isoCertified: true,
   },
   'slack.com': {
-    companyName: 'Slack Technologies LLC (Salesforce)',
+    companyName: 'Slack Technologies LLC (Product of Salesforce)',
     resolutionConfidence: 'High',
     sslGrade: 'A',
     hasExposedService: false,
@@ -184,11 +248,14 @@ export async function runRealtimeOSINTScan(
     });
   });
 
+  let domainValidation: any = null;
+
   // Call actual backend API
   try {
     const res = await fetch(`/api/scan?domain=${encodeURIComponent(domain)}`);
     if (res.ok) {
       const data = await res.json();
+      domainValidation = data.domainValidation;
       if (data.signalStatuses) {
         // Merge backend findings into the default signals
         Object.keys(data.signalStatuses).forEach(sigId => {
@@ -205,17 +272,49 @@ export async function runRealtimeOSINTScan(
   // Update progress to completed
   for (let i = 0; i < steps.length; i++) {
     steps[i].status = 'completed';
-    steps[i].detail = 'Live backend signal query completed';
+    steps[i].detail = domainValidation?.isValid 
+      ? `Verified domain age: ${domainValidation.whoisData?.ageInYears ? domainValidation.whoisData.ageInYears.toFixed(1) + ' yrs' : 'Checked'}`
+      : 'Domain validation complete';
   }
   if (onProgress) onProgress([...steps]);
+
+  let resolutionConfidence: 'High' | 'Low' = profile?.resolutionConfidence || 'High';
+  let resolutionReason = profile?.resolutionReason;
+  let overrideDirectSanctionsOrBreach = profile?.hasSanctionHit || false;
+  let overrideDetails = profile?.hasSanctionHit ? 'Direct OFAC Sanction match flag triggered' : undefined;
+
+  // Handle Unregistered / Non-Existent Domain case
+  if (domainValidation && domainValidation.isRegistered === false) {
+    resolutionConfidence = 'Low';
+    resolutionReason = `CRITICAL: Domain '${domain}' does not exist in DNS (ENOTFOUND) or has no WHOIS registration.`;
+    overrideDirectSanctionsOrBreach = true;
+    overrideDetails = `CRITICAL: Domain '${domain}' is Unregistered / Non-Existent. Failed DNS resolution.`;
+  } else if (domainValidation?.whoisData?.ageInYears !== undefined) {
+    const age = domainValidation.whoisData.ageInYears;
+    const registrar = domainValidation.whoisData.registrar || 'Verified Registrar';
+    if (domain === 'wahidai.com') {
+      resolutionReason = `Verified Product Domain (Parent: Effective Risk Management) — Age: ${age.toFixed(1)} yrs (${registrar})`;
+    } else if (domain === 'effectiverm.com') {
+      resolutionReason = `Verified Enterprise Parent Domain — Age: ${age.toFixed(1)} yrs (${registrar})`;
+    } else {
+      resolutionReason = `Verified Active Domain — Age: ${age.toFixed(1)} yrs (${registrar})`;
+    }
+  }
+
+  const candidateDomains = domain === 'wahidai.com' || domain === 'effectiverm.com'
+    ? ['effectiverm.com', 'wahidai.com', 'effectiveriskmanagement.com']
+    : [domain, `${domain.replace(/\.[a-z]+$/, '')}.io`, `${domain.replace(/\.[a-z]+$/, '')}.net`];
+
+  const productBelongsTo = PRODUCT_ENTITY_MAP[domain.toLowerCase()];
 
   // Construct Vendor Identity
   const identity: VendorIdentity = {
     companyName: profile?.companyName || companyName,
     confirmedDomain: domain,
-    resolutionConfidence: profile?.resolutionConfidence || 'High',
-    resolutionReason: profile?.resolutionReason,
-    candidateDomains: [domain, `${domain.replace(/\.[a-z]+$/, '')}.io`, `${domain.replace(/\.[a-z]+$/, '')}.net`],
+    resolutionConfidence,
+    resolutionReason,
+    candidateDomains,
+    productBelongsTo,
   };
 
   return {
@@ -224,9 +323,9 @@ export async function runRealtimeOSINTScan(
     assets: [],
     signalStatuses,
     customFindings: [],
-    overrideDirectSanctionsOrBreach: profile?.hasSanctionHit || false,
+    overrideDirectSanctionsOrBreach,
     overridePartialSanctions: profile?.hasPartialSanction || false,
-    overrideDetails: profile?.hasSanctionHit ? 'Direct OFAC Sanction match flag triggered' : undefined,
+    overrideDetails,
   };
 }
 

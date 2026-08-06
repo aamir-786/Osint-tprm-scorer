@@ -133,9 +133,13 @@ export const ScorecardView: React.FC<Props> = ({
               <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#ef4444' }}>Failed to score</div>
             ) : aiScoreResult ? (
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                 <span style={{ fontSize: '1.4rem', fontWeight: 900, color: '#1e1b4b' }}>{aiScoreResult.finalScore}</span>
+                 <span style={{ fontSize: '1.4rem', fontWeight: 900, color: hardOverrideApplied || aiScoreResult.grade === 'F' ? '#ef4444' : '#1e1b4b' }}>
+                   {hardOverrideApplied ? 0 : aiScoreResult.finalScore}
+                 </span>
                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#818cf8' }}>/ 950</span>
-                 <span style={{ marginLeft: '6px', background: '#4f46e5', color: 'white', padding: '2px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 800 }}>{aiScoreResult.grade}</span>
+                 <span style={{ marginLeft: '6px', background: hardOverrideApplied || aiScoreResult.grade === 'F' ? '#ef4444' : '#4f46e5', color: 'white', padding: '2px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 800 }}>
+                   {hardOverrideApplied ? 'F' : aiScoreResult.grade}
+                 </span>
               </div>
             ) : (
               <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#94a3b8' }}>Not Available</div>
