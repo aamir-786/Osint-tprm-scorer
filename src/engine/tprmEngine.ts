@@ -92,55 +92,20 @@ export function calculateTPRMScore(input: AssessmentInput): ScoringResult {
     };
   }
 
-  // 2. Calculate category raw scores, coverage, and initial raw effective weights
+  // 2. Fixed Original Category Weights (Dynamic Weight Redistribution Disabled)
   const totalSignalsChecked = Object.values(categoryCheckedCounts).reduce((a, b) => a + b, 0);
   const overallCoverage = totalSignalsChecked / TOTAL_PLANNED_SIGNALS;
   const isInsufficientData = overallCoverage < 0.40;
-  const initialEffectiveWeights: Record<CategoryKey, number> = {} as any;
+  const finalEffectiveWeights: Record<CategoryKey, number> = {} as any;
+  const redistributedWeightGained: Record<CategoryKey, number> = {} as any;
   const weightLostPerCat: Record<CategoryKey, number> = {} as any;
-
-  categoryKeys.forEach(k => {
-    initialEffectiveWeights[k] = 0;
-    weightLostPerCat[k] = 0;
-  });
 
   categoryKeys.forEach(catKey => {
     const meta = CATEGORIES[catKey];
-    const checked = categoryCheckedCounts[catKey];
-    const coverage = checked / meta.plannedSignalsCount;
-    
-    if (coverage >= 0.5) {
-      initialEffectiveWeights[catKey] = meta.weight;
-      weightLostPerCat[catKey] = 0;
-    } else {
-      const reducedWeight = meta.weight * (coverage / 0.5);
-      initialEffectiveWeights[catKey] = reducedWeight;
-      weightLostPerCat[catKey] = meta.weight - reducedWeight;
-    }
+    finalEffectiveWeights[catKey] = meta.weight;
+    redistributedWeightGained[catKey] = 0;
+    weightLostPerCat[catKey] = 0;
   });
-
-  const totalLostWeight = Object.values(weightLostPerCat).reduce((a, b) => a + b, 0);
-
-  const finalEffectiveWeights: Record<CategoryKey, number> = { ...initialEffectiveWeights };
-  const redistributedWeightGained: Record<CategoryKey, number> = {} as any;
-  
-  categoryKeys.forEach(k => redistributedWeightGained[k] = 0);
-
-  if (totalLostWeight > 0) {
-    categoryKeys.forEach(targetCat => {
-      let gained = 0;
-      categoryKeys.forEach(sourceCat => {
-        if (targetCat !== sourceCat && weightLostPerCat[sourceCat] > 0) {
-          const sourceLost = weightLostPerCat[sourceCat];
-          const otherOriginalWeightsSum = 1.0 - CATEGORIES[sourceCat].weight;
-          const proportion = CATEGORIES[targetCat].weight / otherOriginalWeightsSum;
-          gained += sourceLost * proportion;
-        }
-      });
-      redistributedWeightGained[targetCat] = gained;
-      finalEffectiveWeights[targetCat] += gained;
-    });
-  }
 
   // Build Category Results
   const categoryResults: Record<CategoryKey, CategoryResult> = {} as any;
@@ -189,7 +154,7 @@ export function calculateTPRMScore(input: AssessmentInput): ScoringResult {
   const unoverriddenScore = Math.round(unoverriddenScoreFloat);
   const unoverriddenGrade = getGradeFromScore(unoverriddenScore);
 
-  // 4. Determine overall confidence (Weakest link rule)
+  // 4. Determine overall confidence (Weakest link rule + Domain Age Maturity Cap)
   const confidenceOrder: Record<Confidence, number> = { High: 3, Medium: 2, Low: 1 };
   let weakestConfidence: Confidence = 'High';
   let weakestCategoryName = CATEGORIES.security_privacy.name;
@@ -204,6 +169,22 @@ export function calculateTPRMScore(input: AssessmentInput): ScoringResult {
       weakestCategoryName = res.meta.name;
     }
   });
+
+  // Cap confidence for young domains to reflect operational track record limits
+  const domainAgeFinding = categoryResults.reliability_maturity?.findings.find(f => f.signalId === 'bm_domain_age');
+  if (domainAgeFinding) {
+    if (domainAgeFinding.severity === 'Critical') {
+      // Domain < 1 year old (e.g. wahidai.com) -> Cap confidence at Low
+      weakestConfidence = 'Low';
+      weakestCategoryName = 'Domain Track Record (Age < 1 Yr)';
+    } else if (domainAgeFinding.severity === 'High') {
+      // Domain 1 - 3 years old (e.g. effectiverm.com) -> Cap confidence at Medium
+      if (confidenceOrder[weakestConfidence] > confidenceOrder.Medium) {
+        weakestConfidence = 'Medium';
+        weakestCategoryName = 'Domain Track Record (Age < 3 Yrs)';
+      }
+    }
+  }
 
   // 5. Overrides
   let hardOverrideApplied = false;
@@ -223,7 +204,16 @@ export function calculateTPRMScore(input: AssessmentInput): ScoringResult {
   if (hasDirectSanctionOrBreachFinding) {
     hardOverrideApplied = true;
     finalGrade = 'F';
+    finalScore = 0;
     overrideExplanation = input.overrideDetails || 'Direct sanctions/watchlist match or confirmed active breach/ransomware event detected.';
+
+    categoryKeys.forEach(catKey => {
+      categoryResults[catKey] = {
+        ...categoryResults[catKey],
+        rawScore: 0,
+        contribution: 0,
+      };
+    });
   } else if (hasPartialSanctionFinding) {
     softCapApplied = true;
     if (unoverriddenGrade === 'A' || unoverriddenGrade === 'B') {

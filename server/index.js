@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const { validateDomain } = require('./utils/domainValidator');
 const { scanCybersecurity } = require('./scanners/cybersecurity');
 const { scanCompliance } = require('./scanners/compliance');
 const { scanBusinessStability } = require('./scanners/businessStability');
@@ -24,6 +25,8 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+const scanCache = new Map();
+
 // Real-Time OSINT Scan Endpoint
 app.get('/api/scan', async (req, res) => {
   const { domain } = req.query;
@@ -32,10 +35,22 @@ app.get('/api/scan', async (req, res) => {
     return res.status(400).json({ error: 'Domain is required' });
   }
 
-  try {
-    console.log(`[OSINT Backend] Starting full scan for: ${domain}`);
+  const cleanDomain = domain.toLowerCase();
 
-    // Run all scanners concurrently
+  // Return cached result if already scanned for 100% deterministic consistency
+  if (scanCache.has(cleanDomain)) {
+    console.log(`[OSINT Backend] Returning cached deterministic scan for: ${cleanDomain}`);
+    return res.json(scanCache.get(cleanDomain));
+  }
+
+  try {
+    console.log(`[OSINT Backend] Starting full scan for: ${cleanDomain}`);
+
+    // Pre-validate domain existence, WHOIS registration, and HTTP reachability
+    const domainValidation = await validateDomain(cleanDomain);
+    console.log(`[OSINT Backend] Domain validation for ${domain}: isValid=${domainValidation.isValid}, isRegistered=${domainValidation.isRegistered}, age=${domainValidation.whoisData?.ageInYears} yrs`);
+
+    // Run all scanners concurrently, passing domainValidation context
     const [
       cyberResults,
       complianceResults,
@@ -48,16 +63,16 @@ app.get('/api/scan', async (req, res) => {
       nthPartyResults,
       resilienceResults
     ] = await Promise.all([
-      scanCybersecurity(domain),
-      scanCompliance(domain),
-      scanBusinessStability(domain),
-      scanReputation(domain),
-      scanLegal(domain),
-      scanMaturity(domain),
-      scanESG(domain),
-      scanGeopolitical(domain),
-      scanNthParty(domain),
-      scanResilience(domain)
+      scanCybersecurity(domain, domainValidation),
+      scanCompliance(domain, domainValidation),
+      scanBusinessStability(domain, domainValidation),
+      scanReputation(domain, domainValidation),
+      scanLegal(domain, domainValidation),
+      scanMaturity(domain, domainValidation),
+      scanESG(domain, domainValidation),
+      scanGeopolitical(domain, domainValidation),
+      scanNthParty(domain, domainValidation),
+      scanResilience(domain, domainValidation)
     ]);
 
     // Combine all findings
@@ -79,7 +94,6 @@ app.get('/api/scan', async (req, res) => {
     // Map the array of findings to an object keyed by signalId for the frontend
     const signalStatuses = {};
     allFindings.forEach(finding => {
-      // Find the corresponding signalId
       signalStatuses[finding.signalId] = {
         signalId: finding.signalId,
         checked: true,
@@ -90,10 +104,14 @@ app.get('/api/scan', async (req, res) => {
       };
     });
 
-    res.json({
-      domain,
+    const scanResult = {
+      domain: cleanDomain,
+      domainValidation,
       signalStatuses
-    });
+    };
+    scanCache.set(cleanDomain, scanResult);
+
+    res.json(scanResult);
   } catch (error) {
     console.error(`[OSINT Backend] Scan failed for ${domain}:`, error.message);
     res.status(500).json({ error: 'Internal Server Error during OSINT scan' });

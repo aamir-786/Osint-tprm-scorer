@@ -246,6 +246,50 @@ export function VendorIdentityHeader({ identity, onChange, onScanComplete, hasSc
             </div>
           </div>
 
+          {identity.resolutionReason && (
+            <div style={{
+              marginTop: '12px',
+              padding: '10px 14px',
+              borderRadius: '8px',
+              background: identity.resolutionReason.includes('CRITICAL') || identity.resolutionReason.includes('Non-Existent') ? '#fef2f2' : '#f0fdf4',
+              border: `1px solid ${identity.resolutionReason.includes('CRITICAL') || identity.resolutionReason.includes('Non-Existent') ? '#fecaca' : '#bbf7d0'}`,
+              color: identity.resolutionReason.includes('CRITICAL') || identity.resolutionReason.includes('Non-Existent') ? '#991b1b' : '#166534',
+              fontSize: '0.82rem',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              {identity.resolutionReason.includes('CRITICAL') || identity.resolutionReason.includes('Non-Existent') ? (
+                <AlertTriangle size={16} />
+              ) : (
+                <ShieldCheck size={16} />
+              )}
+              <span>{identity.resolutionReason}</span>
+            </div>
+          )}
+
+          {identity.productBelongsTo && (
+            <div style={{
+              marginTop: '12px',
+              padding: '12px 16px',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%)',
+              border: '1px solid #c7d2fe',
+              color: '#1e1b4b',
+              fontSize: '0.84rem',
+              lineHeight: '1.4'
+            }}>
+              <div style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', color: '#4338ca' }}>
+                <Building2 size={16} color="#4f46e5" />
+                <span>PRODUCT & PARENT ENTERPRISE RELATIONSHIP</span>
+              </div>
+              <div>
+                <strong>{identity.confirmedDomain}</strong> is an enterprise product belonging to parent company <strong>{identity.productBelongsTo.parentName}</strong> ({identity.productBelongsTo.parentDomain}). {identity.productBelongsTo.explanation}
+              </div>
+            </div>
+          )}
+
           {identity.resolutionConfidence === 'Low' && (
             <div style={{ marginTop: '14px', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '12px 14px', borderRadius: '8px' }}>
               <label style={{ display: 'block', fontSize: '0.8rem', color: '#fbbf24', fontWeight: 600, marginBottom: '4px' }}>

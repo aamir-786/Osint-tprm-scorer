@@ -9,12 +9,15 @@ import { ScorecardView } from './ScorecardView';
 import { AIScorecardView } from './AIScorecardView';
 import { EvidenceModal } from './EvidenceModal';
 import { PresetSelector } from './PresetSelector';
-import { Download, LayoutGrid, FileText, X } from 'lucide-react';
+import { ArchitectureGuideModal } from './ArchitectureGuideModal';
+import { runAIScore } from '../services/osintScannerService';
+import { Download, LayoutGrid, FileText, X, BookOpen } from 'lucide-react';
 
 export function TprmModuleDashboard() {
   const [hasScanned, setHasScanned] = useState<boolean>(false);
   const [isEvidenceModalOpen, setIsEvidenceModalOpen] = useState(false);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [aiScoreResult, setAiScoreResult] = useState<AIScoreResult | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | undefined>(undefined);
@@ -58,7 +61,6 @@ export function TprmModuleDashboard() {
       setIsAiLoading(true);
       setAiError(undefined);
       try {
-        const { runAIScore } = await import('../services/osintScannerService');
         const aiResult = await runAIScore(domain);
         setAiScoreResult(aiResult);
       } catch (err: any) {
@@ -109,6 +111,9 @@ export function TprmModuleDashboard() {
         </div>
 
         <div style={{ display: 'flex', gap: '12px' }}>
+          <button type="button" className="btn btn-secondary" onClick={() => setIsGuideOpen(true)} style={{ fontSize: '0.84rem', gap: '6px', display: 'flex', alignItems: 'center' }}>
+            <BookOpen size={14} /> System Architecture & Mental Model
+          </button>
           {hasScanned && (
             <button type="button" className="btn btn-secondary" onClick={handleExportBoardPack} style={{ fontSize: '0.84rem' }}>
               <Download size={14} /> Export PDF Report
@@ -123,16 +128,7 @@ export function TprmModuleDashboard() {
         {/* Left Column (or Center Screen if Not Scanned) */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: hasScanned ? '100%' : '800px', width: '100%', margin: hasScanned ? '0' : '40px auto 0' }}>
 
-          <div className={hasScanned ? "wahid-card" : ""}>
-            {hasScanned && (
-              <div className="wahid-card-header" style={{ marginBottom: '16px' }}>
-                <div>
-                  <div className="wahid-card-title">OSINT Telemetry Scanner</div>
-                  <div className="wahid-card-subtitle">Select a preset or enter a domain to scan public records.</div>
-                </div>
-              </div>
-            )}
-
+          <div>
             {hasScanned && (
               <PresetSelector
                 selectedPresetId={hasScanned ? "custom" : ""}
@@ -229,6 +225,10 @@ export function TprmModuleDashboard() {
           </div>
         )}
 
+        <ArchitectureGuideModal
+          isOpen={isGuideOpen}
+          onClose={() => setIsGuideOpen(false)}
+        />
       </div>
     </div>
   );

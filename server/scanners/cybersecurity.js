@@ -1,8 +1,34 @@
 const axios = require('axios');
 const https = require('https');
 
-async function scanCybersecurity(domain) {
+async function scanCybersecurity(domain, domainValidation) {
   const findings = [];
+
+  // If domain does not resolve in DNS or is invalid, report critical findings
+  if (domainValidation && !domainValidation.dnsResolved) {
+    findings.push({
+      signalId: 'cs_ssl',
+      hasFinding: true,
+      severity: 'Critical',
+      findingDetails: `UNREGISTERED / NON-EXISTENT DOMAIN: '${domain}' does not exist in DNS (ENOTFOUND). Cannot establish TLS/SSL.`,
+      source: 'DNS Validator'
+    });
+    findings.push({
+      signalId: 'cs_exposed_services',
+      hasFinding: true,
+      severity: 'Critical',
+      findingDetails: `UNREGISTERED DOMAIN: '${domain}' has no IP resolution. Threat telemetry unavailable.`,
+      source: 'DNS Validator'
+    });
+    findings.push({
+      signalId: 'cs_security_txt',
+      hasFinding: true,
+      severity: 'High',
+      findingDetails: `UNREGISTERED DOMAIN: Missing security disclosure endpoint.`,
+      source: 'DNS Validator'
+    });
+    return findings;
+  }
 
   // 1. SSL/TLS Check (Native Node.js)
   try {
@@ -28,8 +54,8 @@ async function scanCybersecurity(domain) {
     if (err.message && err.message.includes('ENOTFOUND')) {
       findings.push({
         signalId: 'cs_ssl',
-        hasFinding: false,
-        severity: 'Informational',
+        hasFinding: true,
+        severity: 'Critical',
         findingDetails: `Domain does not resolve to an IP (${err.message}). Cannot verify SSL.`,
         source: 'Native TLS Check'
       });
@@ -49,21 +75,23 @@ async function scanCybersecurity(domain) {
   if (shodanKey) {
     try {
       const dns = require('dns').promises;
-      let address;
-      try {
-        const lookupRes = await dns.lookup(domain);
-        address = lookupRes.address;
-      } catch (dnsErr) {
-        if (dnsErr.code === 'ENOTFOUND') {
-          findings.push({
-            signalId: 'cs_exposed_services',
-            hasFinding: false,
-            severity: 'Informational',
-            findingDetails: 'Domain does not resolve to an IP. Cannot run Shodan scan.',
-            source: 'Shodan API'
-          });
-        } else {
-          throw dnsErr;
+      let address = domainValidation?.ipAddress;
+      if (!address) {
+        try {
+          const lookupRes = await dns.lookup(domain);
+          address = lookupRes.address;
+        } catch (dnsErr) {
+          if (dnsErr.code === 'ENOTFOUND') {
+            findings.push({
+              signalId: 'cs_exposed_services',
+              hasFinding: true,
+              severity: 'High',
+              findingDetails: 'Domain does not resolve to an IP. Cannot run Shodan scan.',
+              source: 'Shodan API'
+            });
+          } else {
+            throw dnsErr;
+          }
         }
       }
       
@@ -136,7 +164,6 @@ async function scanCybersecurity(domain) {
                  source: 'Shodan API'
                });
             } else if (shodanErr.response && [401, 403, 429].includes(shodanErr.response.status)) {
-               // Per user instruction: Explicitly state API is exhausted/unavailable. No fallbacks.
                findings.push({
                  signalId: 'cs_exposed_services',
                  hasFinding: false,
